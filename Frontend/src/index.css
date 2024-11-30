@@ -1,0 +1,21 @@
+/* index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Define CSS variables for the custom colors */
+:root {
+  --background: #f0f0f0; /* Replace with your desired color */
+  --boxes: #e0e0e0;
+  --bright-blue: #1e90ff;
+  --dark: #1F2070;
+  --variable-collection-grey: #888888;
+  --variable-collection-white: #ffffff;
+}
+@layer base {
+  html,
+  body {
+    @apply h-full overscroll-none overflow-hidden m-0 p-0;
+  }
+}
+
