@@ -5,7 +5,7 @@ import {
   getMonthlyAttendance,
   calculateEmployeeSalaries
 
-} from "../controllers/attendanceController.js";
+} from "../controllers/AttendanceController.js";
 
 const router = express.Router();
 

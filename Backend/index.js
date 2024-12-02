@@ -4,7 +4,7 @@ import cors from "cors";
 import connectDB from "./mongoose/connectDB.js";
 import authRoutes from "./routes/authRoutes.js"; 
 import employeeRoutes from "./routes/employeeRoutes.js"
-import attendanceRoutes from "./routes/attendanceRoutes.js";
+import attendanceRoutes from "./routes/AttendanceRoutes.js";
 
 
 
