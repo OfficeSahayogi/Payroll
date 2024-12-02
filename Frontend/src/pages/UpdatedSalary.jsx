@@ -1,183 +1,167 @@
-import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import base from "../config/api";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
+import { useSelector } from "react-redux";
+import base from "../config/api";
+import EmployeeEdit from "../Components/EmployeeEdit";
 
-const SalaryTable = () => {
-  const { role, organizations, selectedOrg } = useSelector((state) => state.user);
+const UpdatedSalary = () => {
+  const {
+    role,
+    organizations,
+    selectedOrg: initialSelectedOrg,
+  } = useSelector((state) => state.user);
+  const [selectedOrg, setSelectedOrg] = useState(initialSelectedOrg || "All");
+  const [employees, setEmployees] = useState([]);
+  const [viewUpSal, setViewUpSal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedEmp, setSelectEmp] = useState(null);
 
-  const [selectedOrigin, setSelectedOrganization] = useState(
-    selectedOrg || organizations[0]
-  );
-  const [month, setMonth] = useState(new Date().getMonth() + 1); // Default to current month
-  const [year, setYear] = useState(new Date().getFullYear()); // Default to current year
-  const [salaryData, setSalaryData] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-
-  // Fetch salary data
-  const fetchSalaryData = async () => {
-    if (!selectedOrigin) {
-      Swal.fire({
-        icon: "error",
-        title: "Organization Missing",
-        text: "Please select an organization to proceed.",
-      });
-      return;
-    }
-
+  const fetchEmployees = async () => {
+    setIsLoading(true);
     try {
-      setLoading(true);
-      const response = await axios.get(`${base.baseUrl}/api/attendance/salary`, {
-        params: {
-          month,
-          year,
-          org: selectedOrigin === "All" ? organizations[0] : selectedOrigin,
-        },
-      });
-      setSalaryData(response.data.salaryData);
-      Swal.fire({
-        icon: "success",
-        title: "Data Loaded",
-        text: "Salary data fetched successfully!",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-    } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Error Fetching Data",
-        text: err.response?.data?.message || "Unable to fetch salary data.",
-      });
+      const response = await axios.get(
+        `${base.baseUrl}/api/employees/serialized`,
+        {
+          params: selectedOrg !== "All" ? { org: selectedOrg } : {},
+          withCredentials: true,
+        }
+      );
+      setEmployees(response.data);
+      
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+      Swal.fire("Error", "Failed to fetch employees.", "error");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
+  // Fetch employees on component load or when organization changes
   useEffect(() => {
-    fetchSalaryData();
-  }, [month, year, selectedOrigin]);
+    fetchEmployees();
+  }, [selectedOrg]);
+
+  const handleUpdateSalary = (employee) => {
+    
+    setSelectEmp(employee);
+    setViewUpSal(true);
+  };
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <h2 className="text-center font-bold text-2xl mb-4">Salary Table</h2>
+    <div className="h-full w-full flex flex-col items-center bg-gray-100 p-6">
+      <div className="w-full max-w-6xl bg-white rounded-lg shadow-md p-6">
+        <div className="flex justify-between">
+          <h2 className="text-2xl font-bold text-blue-900 mb-4">
+            Employee List
+          </h2>
 
-      {/* Inputs for Month, Year, and Organization */}
-      <div className="flex justify-center space-x-4 mb-6">
-        <select
-          value={month}
-          onChange={(e) => setMonth(parseInt(e.target.value))}
-          className="p-2 border rounded-lg"
-        >
-          {months.map((monthName, index) => (
-            <option key={index} value={index + 1}>
-              {monthName}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={year}
-          onChange={(e) => setYear(parseInt(e.target.value))}
-          className="p-2 border rounded-lg"
-        >
-          {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i).map((yr) => (
-            <option key={yr} value={yr}>
-              {yr}
-            </option>
-          ))}
-        </select>
-
-        {/* Organization Dropdown for Super Admin */}
-        {role === "Super Admin" && (
-          <select
-            value={selectedOrigin}
-            onChange={(e) => setSelectedOrganization(e.target.value)}
-            className="p-2 border rounded-lg"
-          >
-            <option value="">Select Organization</option>
-            {organizations.map((organization) => (
-              <option key={organization} value={organization}>
-                {organization}
-              </option>
-            ))}
-          </select>
-        )}
-
-        <button
-          onClick={fetchSalaryData}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg"
-        >
-          Fetch Salary
-        </button>
-      </div>
-
-      {/* Table to Display Salary Data */}
-      {loading ? (
-        <p className="text-center text-gray-500">Loading...</p>
-      ) : salaryData.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="table-auto w-full border-collapse border border-gray-300">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="border border-gray-300 px-4 py-2">Emp Code</th>
-                <th className="border border-gray-300 px-4 py-2">Name</th>
-                <th className="border border-gray-300 px-4 py-2">DOJ</th>
-                <th className="border border-gray-300 px-4 py-2">DOL</th>
-                <th className="border border-gray-300 px-4 py-2">Gross Salary</th>
-                <th className="border border-gray-300 px-4 py-2">Total Days</th>
-                <th className="border border-gray-300 px-4 py-2">Present</th>
-                <th className="border border-gray-300 px-4 py-2">Absent</th>
-                <th className="border border-gray-300 px-4 py-2">Actual Salary</th>
-                <th className="border border-gray-300 px-4 py-2">Advances</th>
-                <th className="border border-gray-300 px-4 py-2">Net Payable</th>
-                <th className="border border-gray-300 px-4 py-2">Signature</th>
-              </tr>
-            </thead>
-            <tbody>
-              {salaryData.map((employee, index) => (
-                <tr key={index}>
-                  <td className="border border-gray-300 px-4 py-2">{employee.empCode}</td>
-                  <td className="border border-gray-300 px-4 py-2">{employee.name}</td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {new Date(employee.doj).toLocaleDateString()}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">
-                    {employee.dol ? new Date(employee.dol).toLocaleDateString() : "-"}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2">{employee.grossSalary}</td>
-                  <td className="border border-gray-300 px-4 py-2">{employee.totalDays}</td>
-                  <td className="border border-gray-300 px-4 py-2">{employee.presentDays}</td>
-                  <td className="border border-gray-300 px-4 py-2">{employee.absentDays}</td>
-                  <td className="border border-gray-300 px-4 py-2">{employee.actualSalary}</td>
-                  <td className="border border-gray-300 px-4 py-2">{employee.advances}</td>
-                  <td className="border border-gray-300 px-4 py-2">{employee.netPayable}</td>
-                  <td className="border border-gray-300 px-4 py-2"></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {/* Organization Selector */}
+          {role === "Super Admin" && (
+            <div className="mb-4">
+              <label className="block text-sm font-semibold mb-1">
+                Select Organization:
+              </label>
+              <div className="flex gap-4">
+                <button
+                  className={`p-2 rounded-lg ${
+                    selectedOrg === "All"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200"
+                  }`}
+                  onClick={() => setSelectedOrg("All")}
+                >
+                  All
+                </button>
+                {organizations.map((org) => (
+                  <button
+                    key={org}
+                    className={`p-2 rounded-lg ${
+                      selectedOrg === org
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-200"
+                    }`}
+                    onClick={() => setSelectedOrg(org)}
+                  >
+                    {org}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
-      ) : (
-        <p className="text-center text-gray-500">No data available for the selected criteria.</p>
+
+        {/* Employee Table */}
+        <div className="overflow-x-auto">
+          {isLoading ? (
+            <p className="text-center text-gray-500">Loading employees...</p>
+          ) : employees.length === 0 ? (
+            <p className="text-center text-gray-500">No employees found.</p>
+          ) : (
+            <div
+              className="relative"
+              style={{ maxHeight: "420px", overflow: "hidden" }}
+            >
+              {/* Table Header - Fixed */}
+              <table className="table-auto w-full border-collapse bg-yellow-100">
+                <thead className="bg-blue-100 z-10">
+                  <tr className="text-blue-900 text-center">
+                    <th className="px-4 py-2 border w-[15%]">ECode</th>
+                    <th className="px-4 py-2 border w-[30%]">Name</th>
+                    <th className="px-4 py-2 border w-[20%] ">Salary</th>
+                    <th className="px-4 py-2 border flex-1">Actions</th>
+                  </tr>
+                </thead>
+              </table>
+
+              {/* Scrollable Content */}
+              <div
+                className="overflow-y-auto"
+                style={{
+                  maxHeight: "250px", // Adjust this to leave space for the header
+                }}
+              >
+                <table className="table-auto w-full border-collapse ">
+                  <tbody>
+                    {employees.map((employee) => (
+                      <tr
+                        key={employee._id}
+                        className="text-center hover:bg-gray-100 transition"
+                      >
+                        <td className="px-4 py-2 border w-[15%]">{employee.empCode}</td>
+                        <td className="px-4 py-2 border w-[30%]">{employee.name}</td>
+                        <td className="px-4 py-2 border w-[20%]">
+                          {employee.salary === null
+                            ? "Pending"
+                            : `₹${employee.salary}`}
+                        </td>
+                        <td className="px-4 py-1 border flex-1">
+                          <button
+                            className="bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600"
+                            onClick={() => handleUpdateSalary(employee)}
+                          >
+                            Update Salary
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      {viewUpSal && (
+        <EmployeeEdit
+          employee={selectedEmp}
+          onClose={setViewUpSal}
+          onEmployeeUpdated={fetchEmployees}
+          mode="updateSalary"
+        />
       )}
     </div>
   );
 };
 
-export default SalaryTable;
+export default UpdatedSalary;

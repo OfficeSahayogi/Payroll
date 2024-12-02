@@ -152,7 +152,25 @@ const EmployeeEdit = ({ employee, onClose, onEmployeeUpdated,mode="edit"}) => {
               className="border border-blue-400 rounded-lg outline-none p-3 w-full bg-gray-100"
             />
           </div>
-
+          <div className="relative pt-2">
+            <label
+              htmlFor="empType"
+              className="absolute text-sm md:text-base font-semibold top-1 left-3 bg-white px-1 -mt-2 text-gray-600"
+            >
+              Employee Type <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="empType"
+              value={formData.empType}
+              onChange={handleInputChange}
+              className="border border-blue-400 rounded-lg outline-none p-3 w-full"
+              readonly={mode === "updateSalary"}
+              autoComplete="off"
+            >
+              <option value="Staff">Staff</option>
+              <option value="Labor">Labor</option>
+            </select>
+          </div>
           {/* Name and Mobile */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative pt-2">
@@ -179,6 +197,7 @@ const EmployeeEdit = ({ employee, onClose, onEmployeeUpdated,mode="edit"}) => {
                 value={formData.mobile}
                 onChange={handleInputChange}
                 maxLength={10}
+                disabled={mode === "updateSalary"}
                 className="border border-blue-400 rounded-lg outline-none p-3 w-full"
               />
             </div>

@@ -244,10 +244,11 @@ export const calculateEmployeeSalaries = async (req, res) => {
       year,
       month,
     });
+    
 
     // Map attendance records for quick lookup
     const attendanceMap = attendanceRecords.reduce((map, record) => {
-      map[record.employeeId.toString()] = record.attendance; // Attendance is a plain object here
+      map[record.employeeId] = record.attendance; // Attendance is a plain object here
       return map;
     }, {});
 
@@ -255,7 +256,9 @@ export const calculateEmployeeSalaries = async (req, res) => {
     const isCurrentMonth = year == today.getFullYear() && month == today.getMonth() + 1;
 
     const salaryData = employees.map((employee) => {
-      const attendance = attendanceMap[employee._id.toString()] || {}; // Plain object, not a Map
+      let totalWorkedHours=0
+      let totalWorkPH=0
+      const attendance = attendanceMap[employee._id] || new Map(); // Plain object, not a Map
       let totalPresentDays = 0;
       let totalAbsentDays = 0;
 
@@ -270,13 +273,18 @@ export const calculateEmployeeSalaries = async (req, res) => {
       // Iterate through days in the effective month
       for (let day = 1; day <= effectiveDays; day++) {
         const dayKey = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-        const dailyAttendance = attendance[dayKey] || { status: "Absent" }; // Access as a plain object
-
+        // console.log(attendance.get(dayKey))
+        const dailyAttendance = attendance.get(dayKey)||{}; // Access as a plain object
+        
         console.log("Checking date:", dayKey, "Attendance record:", dailyAttendance);
-
+        if (employee.salaryType === "Hourly" && ((dailyAttendance.status === "Present" || dailyAttendance.status === "Half-Day"))) {
+          
+          totalWorkedHours += dailyAttendance.hoursWorked ; // Add worked hours for hourly employees
+        }
         if (dailyAttendance.status === "Present" || dailyAttendance.status === "Half-Day") {
           totalPresentDays++;
-        } else {
+          totalWorkPH+=dailyAttendance.hoursWorked
+        } else if (dailyAttendance.status === "Absent") {
           totalAbsentDays++;
         }
       }
@@ -291,11 +299,14 @@ export const calculateEmployeeSalaries = async (req, res) => {
       // Calculate salary based on salary type and effective days
       let actualSalary = 0;
       if (employee.salaryType === "Monthly") {
-        actualSalary = (employee.salary / daysInMonth) * totalPresentDays;
+        if(totalAbsentDays===0)
+        actualSalary = ((employee.salary / daysInMonth)/12) * totalWorkPH;
+        else
+        actualSalary = (((employee.salary / daysInMonth)/12) * totalWorkPH)-((employee.salary / daysInMonth)*totalAbsentDays);
       } else if (employee.salaryType === "Daily") {
         actualSalary = employee.salary * totalPresentDays;
       } else if (employee.salaryType === "Hourly") {
-        const totalHours = totalPresentDays * 8; // Assuming 8 hours per day
+        const totalHours =  totalWorkedHours; // Assuming 8 hours per day
         actualSalary = employee.salary * totalHours;
       }
 
@@ -304,8 +315,9 @@ export const calculateEmployeeSalaries = async (req, res) => {
         name: employee.name,
         doj: employee.doj,
         dol: employee.dol,
+        salaryType:employee.salaryType,
         grossSalary: employee.salary,
-        totalDays: effectiveDays,
+        totalDays: employee.salaryType==="Hourly"?`H-${totalWorkedHours}`:`d-${totalPresentDays},H-${totalWorkPH}`,
         presentDays: totalPresentDays,
         absentDays: totalAbsentDays,
         actualSalary: actualSalary.toFixed(2),
@@ -324,20 +336,5 @@ export const calculateEmployeeSalaries = async (req, res) => {
 
 
 
-// async function fetchEmployeesForAttendance(selectedDate, org = null) {
-//   try {
-//     const date = new Date(selectedDate);
-//     date.setUTCHours(0, 0, 0, 0); // Normalize to UTC
 
-//     const query = { doj: { $lte: date }, isDeleted: false };
-//     if (org) {
-//       query.org = org;
-//     }
 
-//     const employees = await Employee.find(query);
-//     return { success: true, employees };
-//   } catch (error) {
-//     console.error("Error fetching employees:", error);
-//     return { success: false, message: error.message };
-//   }
-// }

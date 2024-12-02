@@ -6,29 +6,10 @@ import { selectOrganization } from "../store/userSlice";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  const { role, organizations, selectedOrg } = useSelector((state) => state.user);
+  const { role, organizations, selectedOrg } = useSelector(
+    (state) => state.user
+  );
   const [data, setData] = useState([]);
-
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       if (role === "Super Admin") {
-  //         const response = await axios.get("/api/employees", { withCredentials: true });
-  //         setData(response.data);
-  //       } else if (selectedOrg) {
-  //         const response = await axios.get(
-  //           `/api/employees?organization=${selectedOrg}`,
-  //           { withCredentials: true }
-  //         );
-  //         setData(response.data);
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching dashboard data:", error);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, [role, selectedOrg]);
 
   const handleChangeOrg = async () => {
     // If the user has access to multiple organizations
@@ -76,9 +57,32 @@ const Dashboard = () => {
         )}
       </header>
 
-      <div className="p-4">
-        {role === "Super Admin" && <p>Data for all organizations:</p>}
-        {role === "Admin" && selectedOrg && <p>Data for organization: {selectedOrg}</p>}
+      <div className="p-4 flex items-center justify-center  font-bold">
+        {role === "Super Admin" && (
+          <div className="flex flex-col justify-center gap-10">
+            <p className="text-8xl text-blue-800 font-extrabold"> Super Admin</p>
+            <div className="flex flex-col justify-center items-center gap-2">
+              <p className="text-4xl text-blue-500 font-bold">Current organizations</p>
+              <div className="flex flex-wrap justify-center gap-2">
+              {organizations.map((org) => (
+                <p key={org} className="text-2xl text-blue-400 ">{org}</p>
+              ))}
+              </div>
+            </div>
+          </div>
+        )}
+        {role === "Admin" && selectedOrg && (
+          <div className="flex flex-col justify-center items-center gap-10">
+          <p className="text-8xl text-blue-800 font-extrabold"> Admin</p>
+          <div className="flex flex-col justify-center items-center gap-2">
+            <p className="text-4xl text-blue-500 font-bold">Current organizations</p>
+            <div className="flex flex-wrap justify-center gap-2">
+            
+              <p  className="text-2xl text-blue-400 ">{selectedOrg}</p>
+            </div>
+          </div>
+        </div>
+        )}
         {/* <ul>
           {data.map((item) => (
             <li key={item.id}>{item.name}</li>

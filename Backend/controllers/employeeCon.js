@@ -1,6 +1,6 @@
 import Employee from "../models/Employee.js";
 
-// Helper Function: Generate Unique Employee Code
+import Attendance from "../models/AttendanceSchema.js"
 // const generateEmpCode = async (org, empType) => {
 //   let prefix = "";
 //   let start = 0;
@@ -28,49 +28,70 @@ import Employee from "../models/Employee.js";
 //   }
 
 //   // Fetch all employees for the given organization and type
-//   const employees = await Employee.find({
-//     org,
-//     empType,
-//   });
+//   const employees = await Employee.find({ org, empType });
 
-//   // Extract and validate employee codes
 //   const activeCodes = employees
-//     .filter((e) => !e.isDeleted) // Only active employees
+//     .filter((e) => !e.dol || new Date(e.dol) > new Date()) // Exclude employees who have left
 //     .map((e) => {
-//       const match = e.empCode.match(/\d+$/); // Extract the numeric part of the code
+//       const match = e.empCode.match(/\d+$/); // Extract the numeric part of the empCode
 //       return match ? parseInt(match[0], 10) : null;
 //     })
-//     .filter((code) => code !== null && code >= start && code <= end); // Ensure valid range
+//     .filter((code) => code !== null && code >= start && code <= end);
 
-//   const deletedCodes = employees
-//     .filter((e) => e.isDeleted) // Only deleted employees
-//     .map((e) => {
-//       const match = e.empCode.match(/\d+$/); // Extract the numeric part of the code
-//       return match ? parseInt(match[0], 10) : null;
-//     })
-//     .filter((code) => code !== null && code >= start && code <= end); // Ensure valid range
-
-//   // Find reusable codes from deleted employees
-//   const reusableCodes = deletedCodes.filter((code) => !activeCodes.includes(code));
-
-//   // Step 1: Reuse the smallest deleted code, if available
-//   if (reusableCodes.length > 0) {
-//     return `${prefix}${Math.min(...reusableCodes)}`;
-//   }
-
-//   // Step 2: Generate a new code if no reusable codes are available
-//   const sortedActiveCodes = activeCodes.sort((a, b) => a - b);
+//   const sortedCodes = activeCodes.sort((a, b) => a - b);
 //   for (let i = start; i <= end; i++) {
-//     if (!sortedActiveCodes.includes(i)) {
+//     if (!sortedCodes.includes(i)) {
 //       return `${prefix}${i}`; // Return the first available code
 //     }
 //   }
 
-//   // Step 3: If no codes are available, throw an error
 //   throw new Error("No available codes in the range");
 // };
 
-const generateEmpCode = async (org, empType) => {
+
+
+// export const createEmployee = async (req, res) => {
+//   console.log(req.body)
+//   try {
+//     const { name, mobile, doj, dol, empType, org, salaryType } = req.body;
+//     let { salary } = req.body;
+//     salary = salary != null ? salary : 0;
+
+//     if (dol && new Date(dol) <= new Date(doj)) {
+//       return res.status(400).json({ message: "Date of Leaving must be after Date of Joining." });
+//     }
+
+//     const empCode = await generateEmpCode(org, empType);
+
+//     const newEmployee = new Employee({
+//       name,
+//       mobile,
+//       doj: new Date(doj),
+//       dol: dol ? new Date(dol) : null,
+//       empType,
+//       org,
+//       salaryType,
+//       salary,
+//       empCode,
+//     });
+
+//     await newEmployee.save();
+//     res.status(201).json({ message: "Employee created successfully.", empCode });
+//   } catch (error) {
+//     console.error("Error creating employee:", error);
+//     res.status(500).json({ message: "Failed to create employee.", error: error.message });
+//   }
+// };
+
+
+
+
+
+
+
+// Read Employees (All or by Organization)
+
+const generateEmpCode = async (org, empType, doj) => {
   let prefix = "";
   let start = 0;
   let end = 0;
@@ -97,19 +118,42 @@ const generateEmpCode = async (org, empType) => {
   }
 
   // Fetch all employees for the given organization and type
-  const employees = await Employee.find({ org, empType });
+  const employees = await Employee.find({ org, empType }).select("empCode doj dol");
 
-  const activeCodes = employees
-    .filter((e) => !e.dol || new Date(e.dol) > new Date()) // Exclude employees who have left
+  // Find codes that are no longer active but ensure no overlap in dates
+  const reusableCodes = employees
+    .filter(
+      (e) =>
+        e.dol && // Employee has left
+        new Date(e.dol) < new Date(doj) // Left before the new employee's joining date
+    )
     .map((e) => {
-      const match = e.empCode.match(/\d+$/); // Extract the numeric part of the empCode
+      const match = e.empCode.match(/\d+$/); // Extract numeric part of empCode
       return match ? parseInt(match[0], 10) : null;
     })
     .filter((code) => code !== null && code >= start && code <= end);
 
-  const sortedCodes = activeCodes.sort((a, b) => a - b);
+  if (reusableCodes.length > 0) {
+    return `${prefix}${Math.min(...reusableCodes)}`; // Reuse the smallest available code
+  }
+
+  // If no reusable codes, find the next available code
+  const activeCodes = employees
+    .filter(
+      (e) =>
+        !e.dol || // Currently active
+        new Date(e.dol) >= new Date(doj) // Still active or left after the new employee's joining date
+    )
+    .map((e) => {
+      const match = e.empCode.match(/\d+$/); // Extract numeric part of empCode
+      return match ? parseInt(match[0], 10) : null;
+    })
+    .filter((code) => code !== null && code >= start && code <= end);
+
+  const sortedActiveCodes = activeCodes.sort((a, b) => a - b);
+
   for (let i = start; i <= end; i++) {
-    if (!sortedCodes.includes(i)) {
+    if (!sortedActiveCodes.includes(i)) {
       return `${prefix}${i}`; // Return the first available code
     }
   }
@@ -118,11 +162,7 @@ const generateEmpCode = async (org, empType) => {
 };
 
 
-
-
-// Create Employee
 export const createEmployee = async (req, res) => {
-  console.log(req.body)
   try {
     const { name, mobile, doj, dol, empType, org, salaryType } = req.body;
     let { salary } = req.body;
@@ -132,8 +172,10 @@ export const createEmployee = async (req, res) => {
       return res.status(400).json({ message: "Date of Leaving must be after Date of Joining." });
     }
 
-    const empCode = await generateEmpCode(org, empType);
+    // Generate an appropriate empCode with respect to the joining date
+    const empCode = await generateEmpCode(org, empType, doj);
 
+    // Create a new employee
     const newEmployee = new Employee({
       name,
       mobile,
@@ -155,12 +197,6 @@ export const createEmployee = async (req, res) => {
 };
 
 
-
-
-
-
-
-// Read Employees (All or by Organization)
 export const getEmployees = async (req, res) => {
   try {
     const { org } = req.query;
@@ -190,14 +226,51 @@ export const getEmployees = async (req, res) => {
 
 // Update Employee
 
+// Updated updateEmployee Controller
 export const updateEmployee = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, mobile, doj, dol, empType, salaryType, salary } = req.body;
+    const { name, mobile, doj, dol, empType, org, salaryType, salary } = req.body;
 
+    // Find the employee by ID
     const employee = await Employee.findById(id);
-    if (!employee) return res.status(404).json({ message: "Employee not found." });
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found." });
+    }
 
+    // If organization or employee type is changing, delete the old employee and create a new one
+    if ((org && org !== employee.org) || (empType && empType !== employee.empType)) {
+      // Remove associated attendance records
+      await Attendance.deleteMany({ employeeId: employee._id });
+
+      // Delete the existing employee
+      await Employee.findByIdAndDelete(employee._id); // Use findByIdAndDelete instead of remove
+
+      // Generate a new empCode for the new organization and type
+      const newEmpCode = await generateEmpCode(org || employee.org, empType || employee.empType, doj || employee.doj);
+
+      // Create a new employee record
+      const newEmployee = new Employee({
+        name: name || employee.name,
+        mobile: mobile || employee.mobile,
+        doj: doj ? new Date(doj) : employee.doj,
+        dol: dol ? new Date(dol) : null,
+        empType: empType || employee.empType,
+        org: org || employee.org,
+        salaryType: salaryType || employee.salaryType,
+        salary: salary != null ? salary : employee.salary,
+        empCode: newEmpCode,
+      });
+
+      await newEmployee.save();
+
+      return res.status(201).json({
+        message: "Employee updated successfully and moved to a new group.",
+        newEmployeeId: newEmployee._id,
+      });
+    }
+
+    // If no organization or employee type change, just update the existing employee
     if (dol && new Date(dol) <= new Date(doj || employee.doj)) {
       return res.status(400).json({ message: "Date of Leaving must be after Date of Joining." });
     }
@@ -206,17 +279,18 @@ export const updateEmployee = async (req, res) => {
     employee.mobile = mobile || employee.mobile;
     employee.doj = doj ? new Date(doj) : employee.doj;
     employee.dol = dol ? new Date(dol) : employee.dol;
-    employee.empType = empType || employee.empType;
     employee.salaryType = salaryType || employee.salaryType;
     employee.salary = salary != null ? salary : employee.salary;
 
     await employee.save();
-    res.status(200).json({ message: "Employee updated successfully." });
+
+    return res.status(200).json({ message: "Employee updated successfully." });
   } catch (error) {
     console.error("Error updating employee:", error);
-    res.status(500).json({ message: "Failed to update employee.", error: error.message });
+    return res.status(500).json({ message: "Failed to update employee.", error: error.message });
   }
 };
+
 
 
 

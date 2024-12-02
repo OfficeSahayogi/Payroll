@@ -197,8 +197,8 @@ function Navbar() {
                     </option>
 
                     {/* Other selectable options */}
-                    <option value="/CreateOrgforApprovedUser">Add</option>
-                    <option value="/OrgDashboard/superAdmin/Create_User">
+                    <option value="addAdvance">Add</option>
+                    <option value="advanceList">
                       List
                     </option>
                   </select>

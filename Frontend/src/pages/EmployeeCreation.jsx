@@ -22,7 +22,7 @@ const EmployeeCreation = () => {
     dol: null,
     empType: "Staff", // Default to "Staff"
     salaryType: "Monthly", // Default to "Fixed"
-    salary: 0,
+    salary: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const datePickerRefDoj = useRef(null);
@@ -116,7 +116,7 @@ const EmployeeCreation = () => {
           Create Employee
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+        <form onSubmit={handleSubmit} className=" space-y-2 2xl:space-y-4" autoComplete="off">
           {/* Organization Selector for Super Admin */}
           {role === "Super Admin" && (
             <div className="relative pt-2">

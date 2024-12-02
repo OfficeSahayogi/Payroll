@@ -61,11 +61,15 @@ const AttendanceTable = () => {
 
   const exportToPDF = () => {
     const doc = new jsPDF("landscape");
+  
+    // Set header font style
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-
+    doc.setFontSize(14);
+  
+    // Add Title
     doc.text(`Attendance Sheet - ${selectedOrganization}`, 14, 10);
-
+  
+    // Define Table Header
     const tableHead = [
       "Sno.",
       "Name",
@@ -73,34 +77,56 @@ const AttendanceTable = () => {
       "DOJ",
       "DOL",
       "Gross Wages",
-      ...Array.from({ length: daysInMonth }, (_, index) => index + 1),
+      ...Array.from({ length: daysInMonth }, (_, index) => String(index + 1).padStart(2, "0")), // Days in two-digit format
       "P",
       "A",
-      "Signature",
     ];
-
+  
+    // Define Table Body
     const tableBody = attendanceData.map((emp, empIndex) => [
-      empIndex + 1,
-      emp?.emp?.name || "-",
-      emp?.emp?.empCode || "-",
-      emp?.emp?.doj ? new Date(emp.emp.doj).toLocaleDateString() : "-",
-      emp?.emp?.dol ? new Date(emp.emp.dol).toLocaleDateString() : "-",
-      `${emp?.emp?.salary || "-"} / ${emp?.emp?.salaryType || "-"}`,
-      ...emp?.dailyAttendance?.map((day) => (day.status === "-" ? "-" : day.hoursWorked)) || [],
-      emp?.dailyAttendance?.filter((day) => day.status === "Present").length || 0,
-      emp?.dailyAttendance?.filter((day) => day.status === "Absent").length || 0,
-      "",
+      empIndex + 1, // Sno.
+      emp?.emp?.name || "-", // Name (Do not shrink this column)
+      emp?.emp?.empCode || "-", // Code
+      emp?.emp?.doj ? new Date(emp.emp.doj).toLocaleDateString() : "-", // DOJ
+      emp?.emp?.dol ? new Date(emp.emp.dol).toLocaleDateString() : "-", // DOL
+      `${emp?.emp?.salary || "-"} / ${emp?.emp?.salaryType || "-"}`, // Gross Wages
+      ...emp?.dailyAttendance?.map((day) =>
+        day.status === "-" ? "-" : day.status==="Absent"?"A":day.status==="Present"?"P":"H"
+      ) || [], // Attendance Hours
+      emp?.dailyAttendance?.filter((day) => day.status === "Present" || day.status==="Half-Day").length || 0, // Total Presents
+      emp?.dailyAttendance?.filter((day) => day.status === "Absent").length || 0, // Total Absents
     ]);
-
+  
+    // Generate Table in Landscape Mode
     autoTable(doc, {
       head: [tableHead],
       body: tableBody,
       startY: 20,
-      styles: { fontSize: 10, halign: "center" },
+      styles: {
+        fontSize: 7, // Reduced font size for compactness
+        halign: "center", // Horizontal alignment for all cells
+        cellPadding: 1.5, // Reduced padding for better fit
+      },
+      columnStyles: {
+        0: { cellWidth: 8 }, // Sno.
+        1: { cellWidth: 40 }, // Name (wider for readability)
+        2: { cellWidth: 8 }, // Code
+        3: { cellWidth: 14 }, // DOJ (smaller width)
+        4: { cellWidth: 14 }, // DOL (smaller width)
+        5: { cellWidth: 15 }, // Gross Wages
+        // Day columns (automatically adjusted to fit within the page)
+        [6 + daysInMonth]: { cellWidth: 5 }, // P (Presents)
+        [7 + daysInMonth]: { cellWidth: 5 }, // A (Absents)
+      },
+      tableWidth: "auto", // Ensures table fits within the page
+      theme: "grid", // Add grid lines for better readability
     });
-
+  
+    // Save the PDF
     doc.save(`${selectedOrganization}_Attendance_${selectedYear}-${selectedMonth}.pdf`);
   };
+  
+  
   const formatDate = (currentDate) => {
     const dd = String(currentDate.getDate()).padStart(2, "0");
     const mm = String(currentDate.getMonth() + 1).padStart(2, "0"); // Months are 0-based
@@ -174,7 +200,7 @@ const AttendanceTable = () => {
         ) : error ? (
           <p className="text-center text-red-500">{error}</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[300px] 2xl:max-h-[600px] overflow-y-auto">
             <table className="w-full table-auto border-collapse border border-gray-300">
               <thead className="sticky top-0 bg-blue-300">
                 <tr>
@@ -214,11 +240,12 @@ const AttendanceTable = () => {
                         key={dayIndex}
                         className="border border-gray-300 px-2 text-center"
                       >
-                        {day.status === "-" ? "-" : day.status==="Absent"?"A":"P"}
+                        {day.status === "-" ? "-" : day.status==="Absent"?"A":day.status==="Present"?"P":"H"}
                       </td>
                     ))}
                     <td className="border border-gray-300 px-4 py-2 text-center">
-                      {emp.dailyAttendance.filter((day) => day.status === "Present").length}
+                      {emp.dailyAttendance.filter((day) => day.status === "Present"|| day.status===
+                    "Half-Day").length}
                     </td>
                     <td className="border border-gray-300 px-4 py-2 text-center">
                       {emp.dailyAttendance.filter((day) => day.status === "Absent").length}
