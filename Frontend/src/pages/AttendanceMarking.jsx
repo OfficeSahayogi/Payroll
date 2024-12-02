@@ -178,14 +178,26 @@ const AttendanceMarking = () => {
     }));
   };
   const handleManualAbsentSubmit = () => {
-    const codes = absentEmployeeCodes.split(",").map((code) => code.trim());
+    let codes;
+    if(selectedOrgin==="Jai Durga Cottex")
+    {
+    codes= absentEmployeeCodes.split(",").map((code) => {
+     let cur= code.trim()
+     return `JDC-${cur}`
+    }
+    );
+    }
+    else{
+     codes= absentEmployeeCodes.split(",").map((code) => code.trim());
+    }
+    console.log("code",codes)
     const updatedData = filemployees.map((emp) => {
       if (codes.includes(emp.empCode)) {
         return { ...emp, status: "Absent", hoursWorked: 0 };
       }
       return emp;
     });
-
+    console.log(codes)
     setFileEmployees(updatedData);
     setShowManualAbsentModal(false); // Close the modal after updating
     setAbsentEmployeeCodes(""); // Clear the input field

@@ -7,6 +7,7 @@ import autoTable from "jspdf-autotable";
 import base from "../config/api";
 
 const DailyEmployeeChart = () => {
+  const currentDate=new Date().toDateString
   const {
     role,
     organizations,
@@ -42,86 +43,197 @@ const DailyEmployeeChart = () => {
   const exportToPDF = () => {
     const doc = new jsPDF("portrait"); // Portrait orientation
     const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 10; // Margin around the page
-    const gridHeight = (pageHeight - 4 * margin) / 3; // Divide page height into three grids
   
-    // Helper function to split data into three grids
-    const splitIntoGrids = (data, numGrids) => {
-      const gridSize = Math.ceil(data.length / numGrids);
-      const grids = [];
-      for (let i = 0; i < numGrids; i++) {
-        grids.push(data.slice(i * gridSize, (i + 1) * gridSize));
-      }
-      return grids;
+    // Get the current date in dd-mm-yyyy format
+    const formatDate = () => {
+      const currentDate = new Date();
+      const dd = String(currentDate.getDate()).padStart(2, "0");
+      const mm = String(currentDate.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+      const yyyy = currentDate.getFullYear();
+      return `${dd}-${mm}-${yyyy}`;
     };
   
-    // Filter Staff and Labor Data
+    const currentDate = formatDate();
+  
+    // Helper function to format data into three columns
+    const formatDataIntoColumns = (data) => {
+      const columnSize = Math.ceil(data.length / 3); // Divide data into three parts
+      return [
+        data.slice(0, columnSize),
+        data.slice(columnSize, columnSize * 2),
+        data.slice(columnSize * 2),
+      ];
+    };
+  
+    // Filter Staff and Labour Data
     const staffData = chartData.filter((row) => row.type === "Staff");
     const labourData = chartData.filter((row) => row.type === "Labor");
   
-    // Split data into three grids
-    const staffGrids = splitIntoGrids(staffData, 3);
-    const labourGrids = splitIntoGrids(labourData, 3);
+    // Split data into three columns
+    const [staffLeft, staffMid, staffRight] = formatDataIntoColumns(staffData);
+    const [labourLeft, labourMid, labourRight] = formatDataIntoColumns(labourData);
   
-    // Function to render a single grid
-    const renderGrid = (data, startY) => {
+    // Function to render a single table
+    const addTable = (title, leftColumn, midColumn, rightColumn, startY) => {
+      // Prepare table data
       const tableData = [];
-  
-      // Format each row as three columns (Code, Name pairs)
-      for (let i = 0; i < data.length; i += 3) {
+      for (
+        let i = 0;
+        i < Math.max(leftColumn.length, midColumn.length, rightColumn.length);
+        i++
+      ) {
         tableData.push([
-          data[i]?.code || "",
-          data[i]?.name || "",
-          data[i + 1]?.code || "",
-          data[i + 1]?.name || "",
-          data[i + 2]?.code || "",
-          data[i + 2]?.name || "",
+          leftColumn[i] ? leftColumn[i].code : "",
+          leftColumn[i] ? leftColumn[i].name : "",
+          midColumn[i] ? midColumn[i].code : "",
+          midColumn[i] ? midColumn[i].name : "",
+          rightColumn[i] ? rightColumn[i].code : "",
+          rightColumn[i] ? rightColumn[i].name : "",
         ]);
       }
   
+      // Add table to PDF
       autoTable(doc, {
         head: [["Code", "Name", "Code", "Name", "Code", "Name"]],
         body: tableData,
         startY,
-        styles: { fontSize: 8, cellPadding: 1.5, halign: "center" },
+        styles: { cellPadding: 2, fontSize: 8 }, // Reduced font size for compact layout
         theme: "grid",
         columnStyles: {
-          0: { cellWidth: 20 }, // Code column 1
-          1: { cellWidth: 60 }, // Name column 1
-          2: { cellWidth: 20 }, // Code column 2
-          3: { cellWidth: 60 }, // Name column 2
-          4: { cellWidth: 20 }, // Code column 3
-          5: { cellWidth: 60 }, // Name column 3
+          0: { cellWidth: 15 }, // Code (Left)
+          1: { cellWidth: 50 }, // Name (Left)
+          2: { cellWidth: 15 }, // Code (Middle)
+          3: { cellWidth: 50 }, // Name (Middle)
+          4: { cellWidth: 15 }, // Code (Right)
+          5: { cellWidth: 50 }, // Name (Right)
         },
         margin: { left: margin, right: margin },
       });
     };
   
-    // Render Staff Data (First Page)
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    const staffTitle = `${selectedOrganization} - Staff Data`;
-    const titleWidth = doc.getTextWidth(staffTitle);
-    doc.text(staffTitle, (pageWidth - titleWidth) / 2, margin); // Centered title
-    staffGrids.forEach((grid, index) => {
-      const startY = margin + 10 + index * (gridHeight + margin);
-      renderGrid(grid, startY);
-    });
+    let startY = 20;
   
-    // Add Labor Data (Second Page)
-    doc.addPage();
-    const labourTitle = `${selectedOrganization} - Labor Data`;
-    const labourTitleWidth = doc.getTextWidth(labourTitle);
-    doc.text(labourTitle, (pageWidth - labourTitleWidth) / 2, margin); // Centered title
-    labourGrids.forEach((grid, index) => {
-      const startY = margin + 10 + index * (gridHeight + margin);
-      renderGrid(grid, startY);
-    });
+    // Add Staff Data on the First Page
+    if (staffData.length > 0) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12); // Title font size
+      const staffTitle = `${selectedOrganization}`;
+      const staffTitleWidth = doc.getTextWidth(staffTitle);
+      doc.text(staffTitle, (pageWidth - staffTitleWidth) / 2, margin); // Centered title
+  
+      // Add the date at the top right corner
+      doc.setFontSize(10);
+      doc.text(currentDate, pageWidth - margin - doc.getTextWidth(currentDate), margin);
+  
+      addTable("Staff", staffLeft, staffMid, staffRight, startY);
+    }
+  
+    // Add Labour Data on the Second Page
+    if (labourData.length > 0) {
+      doc.addPage(); // Add a new page for Labour data
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12); // Title font size
+      const labourTitle = `${selectedOrganization}`;
+      const labourTitleWidth = doc.getTextWidth(labourTitle);
+      doc.text(labourTitle, (pageWidth - labourTitleWidth) / 2, margin); // Centered title
+  
+      // Add the date at the top right corner
+      doc.setFontSize(10);
+      doc.text(currentDate, pageWidth - margin - doc.getTextWidth(currentDate), margin);
+  
+      addTable("Labour", labourLeft, labourMid, labourRight, startY);
+    }
   
     // Save the PDF
-    doc.save(`${selectedOrganization}_Staff_and_Labor_Data.pdf`);
+    doc.save(`${selectedOrganization}_Staff_and_Labour_Data.pdf`);
   };
+  
+  
+  
+  
+  // const exportToPDF = () => {
+  //   const doc = new jsPDF("landscape");
+  
+  //   // Filter the data for Staff and Labour separately
+  //   const staffData = chartData.filter((row) => row.type === "Staff");
+  //   const labourData = chartData.filter((row) => row.type === "Labor");
+  
+  //   // Helper function to format data into two columns
+  //   const formatDataIntoColumns = (data) => {
+  //     const midpoint = Math.ceil(data.length / 2);
+  //     return [data.slice(0, midpoint), data.slice(midpoint)];
+  //   };
+  
+  //   // Function to split data into multiple pages
+  //   const paginateData = (data, rowsPerPage) => {
+  //     const pages = [];
+  //     for (let i = 0; i < data.length; i += rowsPerPage) {
+  //       pages.push(data.slice(i, i + rowsPerPage));
+  //     }
+  //     return pages;
+  //   };
+  
+  //   // Generate table for a specific type (Staff/Labour)
+  //   const addTable = (title, data, startY) => {
+  //     doc.setFont("helvetica", "bold"); // Set font to bold
+  //     doc.setFontSize(16); // Set font size to 16 for a larger title
+  //     const pageWidth = doc.internal.pageSize.getWidth(); // Total width of the PDF
+  //     const textWidth = doc.getTextWidth(title); // Width of the title text
+  //     const centerX = (pageWidth - textWidth) / 2; // Calculate centered X position
+  //     doc.text(title, centerX, startY - 6); // Add title text
+  
+  //     const tableData = data.map((row) => [row.code, row.name]);
+  
+  //     // Define rows per page based on the page height and row height
+  //     const pageHeight = doc.internal.pageSize.getHeight() - 20; // Subtract margins
+  //     const rowHeight = 10; // Approximate row height
+  //     const rowsPerPage = Math.floor(pageHeight / rowHeight);
+  
+  //     // Split data into multiple pages if it exceeds rows per page
+  //     const paginatedData = paginateData(tableData, rowsPerPage);
+  
+  //     let currentY = startY;
+  //     paginatedData.forEach((page, pageIndex) => {
+  //       if (pageIndex > 0) {
+  //         doc.addPage(); // Add a new page for each subsequent page
+  //         currentY = 20; // Reset startY for the new page
+  //       }
+  
+  //       autoTable(doc, {
+  //         head: [["Code", "Name"]],
+  //         body: page,
+  //         startY: currentY,
+  //         styles: { cellPadding: 2, fontSize: 10, halign: "center" },
+  //         theme: "grid",
+  //         columnStyles: {
+  //           0: { cellWidth: 50, halign: "center" }, // Adjust column width
+  //           1: { cellWidth: 100, halign: "center" },
+  //         },
+  //         margin: { left: 10, right: 10 },
+  //       });
+  
+  //       currentY = doc.previousAutoTable.finalY + 10; // Update Y position for the next section
+  //     });
+  //   };
+  
+  //   let startY = 20;
+  
+  //   // Add Staff Data
+  //   if (staffData.length > 0) {
+  //     addTable(`${selectedOrganization} - Staff`, staffData, startY);
+  //   }
+  
+  //   // Add Labour Data
+  //   if (labourData.length > 0) {
+  //     addTable(`${selectedOrganization} - Labour`, labourData, startY);
+  //   }
+  
+  //   // Save PDF
+  //   doc.save(`${selectedOrganization}_DailyEmployeeChart.pdf`);
+  // };
+  
+  
   
   
   

@@ -2,7 +2,8 @@ import express from "express";
 import {
   markAttendanceForEmployees,
   getAttendanceDataForEmployees,
-  getMonthlyAttendance
+  getMonthlyAttendance,
+  calculateEmployeeSalaries
 
 } from "../controllers/attendanceController.js";
 
@@ -14,6 +15,8 @@ router.post("/mark", getAttendanceDataForEmployees);
 router.post("/markAttendence",markAttendanceForEmployees)
 
 router.get("/monthly", getMonthlyAttendance);
+
+router.get("/salary",calculateEmployeeSalaries)
 
 // Route to get attendance by date or range
 // router.get("/", getAttendanceByDate);

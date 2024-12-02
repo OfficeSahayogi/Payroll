@@ -149,6 +149,7 @@ export const markAttendanceForEmployees = async (req, res) => {
 
 
 export const getMonthlyAttendance = async (req, res) => {
+  
   try {
     const { org, month, year } = req.query;
 
@@ -175,36 +176,39 @@ export const getMonthlyAttendance = async (req, res) => {
 
     const daysInMonth = new Date(year, month, 0).getDate();
     const responseData = employees.map((emp) => {
-      const attendance = attendanceMap[emp._id] || {};
-
-      // Construct the daily attendance for the entire month
+      const attendance = attendanceMap[emp._id] || new Map(); // Ensure it's a Map
+    
+      // Build daily attendance data
+      console.log("attendance current", attendance);
       const dailyAttendance = Array.from({ length: daysInMonth }, (_, index) => {
-        const day = `${year}-${String(month).padStart(2, "0")}-${String(index + 1).padStart(2, "0")}`;
-        // If specific attendance is recorded for the day, use it; otherwise, default to "-"
-        if (attendance[day]) {
+        const day = `${year}-${String(month).padStart(2, "0")}-${String(
+          index + 1
+        ).padStart(2, "0")}`;
+        console.log("day", day);
+    
+        // Access the attendance record using Map's get method
+        const attendanceRecord = attendance.get(day);
+    
+        if (attendanceRecord) {
+          console.log("attendance show", attendanceRecord);
           return {
             date: day,
-            status: attendance[day].status,
-            hoursWorked: attendance[day].hoursWorked,
+            status: attendanceRecord.status || "-",
+            hoursWorked: attendanceRecord.hoursWorked || "-",
           };
         }
+    
+        // Default data for days with no attendance
         return {
           date: day,
           status: "-",
           hoursWorked: "-",
         };
       });
-
-      return {
-        empCode: emp.empCode,
-        name: emp.name,
-        doj: emp.doj,
-        dol: emp.dol,
-        salaryType: emp.salaryType,
-        salary: emp.salary,
-        attendance: dailyAttendance,
-      };
+    
+      return { emp, dailyAttendance }; // Include the daily attendance for each employee
     });
+    
 
     res.status(200).json(responseData);
   } catch (error) {
@@ -212,6 +216,111 @@ export const getMonthlyAttendance = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch attendance", error });
   }
 };
+
+
+export const calculateEmployeeSalaries = async (req, res) => {
+  try {
+    const { month, year, org } = req.query;
+
+    if (!month || !year) {
+      return res.status(400).json({ success: false, message: "Month and year are required." });
+    }
+
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    // Fetch employees based on organization and date range
+    const query = { org, $or: [{ dol: null }, { dol: { $gte: new Date(year, month - 1, 1) } }] };
+    const employees = await Employee.find(query).select(
+      "name empCode doj dol salaryType salary empType"
+    );
+
+    if (!employees || employees.length === 0) {
+      return res.status(404).json({ success: false, message: "No employees found for the given criteria." });
+    }
+
+    // Fetch attendance records
+    const attendanceRecords = await Attendance.find({
+      employeeId: { $in: employees.map((emp) => emp._id) },
+      year,
+      month,
+    });
+
+    // Map attendance records for quick lookup
+    const attendanceMap = attendanceRecords.reduce((map, record) => {
+      map[record.employeeId.toString()] = record.attendance; // Attendance is a plain object here
+      return map;
+    }, {});
+
+    const today = new Date(); // Current date
+    const isCurrentMonth = year == today.getFullYear() && month == today.getMonth() + 1;
+
+    const salaryData = employees.map((employee) => {
+      const attendance = attendanceMap[employee._id.toString()] || {}; // Plain object, not a Map
+      let totalPresentDays = 0;
+      let totalAbsentDays = 0;
+
+      const effectiveDays = isCurrentMonth ? today.getDate() : daysInMonth;
+
+      if (employee.salary === 0 || employee.salary === null) {
+        throw new Error(`Salary for employee ${employee.empCode} (${employee.name}) is not set.`);
+      }
+
+      console.log("Processing employee:", employee.empCode, "Attendance:", attendance);
+
+      // Iterate through days in the effective month
+      for (let day = 1; day <= effectiveDays; day++) {
+        const dayKey = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const dailyAttendance = attendance[dayKey] || { status: "Absent" }; // Access as a plain object
+
+        console.log("Checking date:", dayKey, "Attendance record:", dailyAttendance);
+
+        if (dailyAttendance.status === "Present" || dailyAttendance.status === "Half-Day") {
+          totalPresentDays++;
+        } else {
+          totalAbsentDays++;
+        }
+      }
+
+      // If it's a past month, ensure attendance is complete
+      if (!isCurrentMonth && Object.keys(attendance).length < daysInMonth) {
+        throw new Error(
+          `Incomplete attendance data for employee ${employee.empCode} (${employee.name}) for the month ${month}/${year}.`
+        );
+      }
+
+      // Calculate salary based on salary type and effective days
+      let actualSalary = 0;
+      if (employee.salaryType === "Monthly") {
+        actualSalary = (employee.salary / daysInMonth) * totalPresentDays;
+      } else if (employee.salaryType === "Daily") {
+        actualSalary = employee.salary * totalPresentDays;
+      } else if (employee.salaryType === "Hourly") {
+        const totalHours = totalPresentDays * 8; // Assuming 8 hours per day
+        actualSalary = employee.salary * totalHours;
+      }
+
+      return {
+        empCode: employee.empCode,
+        name: employee.name,
+        doj: employee.doj,
+        dol: employee.dol,
+        grossSalary: employee.salary,
+        totalDays: effectiveDays,
+        presentDays: totalPresentDays,
+        absentDays: totalAbsentDays,
+        actualSalary: actualSalary.toFixed(2),
+        advances: 0, // Default value; can be updated dynamically
+        netPayable: actualSalary.toFixed(2), // Adjusted by advances
+      };
+    });
+
+    return res.status(200).json({ success: true, salaryData });
+  } catch (error) {
+    console.error("Error calculating salaries:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 
 
 

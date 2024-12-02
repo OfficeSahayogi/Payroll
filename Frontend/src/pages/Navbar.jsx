@@ -221,7 +221,7 @@ function Navbar() {
                     <option value="AttendanceSheet">
                       Attendance Sheet
                     </option>
-                    <option value="/">
+                    <option value="salarySheet">
                       Salary Sheet
                     </option>
                   </select>

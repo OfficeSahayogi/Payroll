@@ -56,6 +56,7 @@ const App = () => {
           <Route path="viewAttendance" element={<ViewAttendance />} />
           <Route path="updateSalary" element={<UpdatedSalary />} />
           <Route path="AttendanceSheet" element={<AttendanceTable/>} />
+          <Route path="salarySheet" element={<UpdatedSalary/>} />
         </Route>
 
         {/* Catch-All for Invalid Routes */}
