@@ -5,7 +5,7 @@ import User from "../models/User.js";
 // Login Function
 const loginUser = async (req, res) => {
   const { mobile, password } = req.body;
-  console.log("email", mobile, "password", password);
+  
 
   try {
     // Find the user by mobile number
@@ -13,11 +13,11 @@ const loginUser = async (req, res) => {
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
-    console.log(user);
+    
 
     // Compare the provided password with the hashed password in the database
     const isMatch = bcrypt.compareSync(password, user.password);
-    console.log("Password Match:", isMatch);
+    
 
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -46,7 +46,7 @@ const loginUser = async (req, res) => {
       error: false,
     });
   } catch (error) {
-    console.error(error);
+    
     res.status(400).json({ message: "Server error" });
   }
 };

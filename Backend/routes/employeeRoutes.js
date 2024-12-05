@@ -6,6 +6,7 @@ import {
   deleteEmployee,
   getEmployeeChart,
   getSerializedEmployees,
+  getEmpToAdvanceMark
   // getAttendanceEmp
 } from "../controllers/employeeCon.js";
 
@@ -28,5 +29,6 @@ router.get("/chart", getEmployeeChart);
 
 router.get("/serialized", getSerializedEmployees);
 // router.get("/getAttendance",getAttendanceEmp)
+router.get("/getEmpToAdvanceMark",getEmpToAdvanceMark)
 
 export default router;

@@ -51,7 +51,7 @@ import Attendance from "../models/AttendanceSchema.js"
 
 
 // export const createEmployee = async (req, res) => {
-//   console.log(req.body)
+//   .log(req.body)
 //   try {
 //     const { name, mobile, doj, dol, empType, org, salaryType } = req.body;
 //     let { salary } = req.body;
@@ -120,11 +120,11 @@ const generateEmpCode = async (org, empType, doj) => {
   // Fetch all employees for the given organization and type
   const employees = await Employee.find({ org, empType }).select("empCode doj dol");
 
-  // Find codes that are no longer active but ensure no overlap in dates
+  // Find reusable codes where the `dol` is before the new employee's `doj`
   const reusableCodes = employees
     .filter(
       (e) =>
-        e.dol && // Employee has left
+        e.dol && // Employee has a date of leaving
         new Date(e.dol) < new Date(doj) // Left before the new employee's joining date
     )
     .map((e) => {
@@ -133,17 +133,27 @@ const generateEmpCode = async (org, empType, doj) => {
     })
     .filter((code) => code !== null && code >= start && code <= end);
 
-  if (reusableCodes.length > 0) {
-    return `${prefix}${Math.min(...reusableCodes)}`; // Reuse the smallest available code
+  // Check if these reusable codes are free from overlap
+  const overlappingCodes = employees
+    .filter(
+      (e) =>
+        !e.dol || // Employee is currently active
+        (new Date(e.doj) <= new Date(doj) && new Date(e.dol) >= new Date(doj)) // Employment period overlaps with the new employee's joining date
+    )
+    .map((e) => {
+      const match = e.empCode.match(/\d+$/); // Extract numeric part of empCode
+      return match ? parseInt(match[0], 10) : null;
+    });
+
+  // Find codes that are reusable and not overlapping
+  const availableCodes = reusableCodes.filter((code) => !overlappingCodes.includes(code));
+
+  if (availableCodes.length > 0) {
+    return `${prefix}${Math.min(...availableCodes)}`; // Reuse the smallest available code
   }
 
   // If no reusable codes, find the next available code
   const activeCodes = employees
-    .filter(
-      (e) =>
-        !e.dol || // Currently active
-        new Date(e.dol) >= new Date(doj) // Still active or left after the new employee's joining date
-    )
     .map((e) => {
       const match = e.empCode.match(/\d+$/); // Extract numeric part of empCode
       return match ? parseInt(match[0], 10) : null;
@@ -162,6 +172,7 @@ const generateEmpCode = async (org, empType, doj) => {
 };
 
 
+
 export const createEmployee = async (req, res) => {
   try {
     const { name, mobile, doj, dol, empType, org, salaryType } = req.body;
@@ -174,7 +185,7 @@ export const createEmployee = async (req, res) => {
 
     // Generate an appropriate empCode with respect to the joining date
     const empCode = await generateEmpCode(org, empType, doj);
-
+    
     // Create a new employee
     const newEmployee = new Employee({
       name,
@@ -191,7 +202,7 @@ export const createEmployee = async (req, res) => {
     await newEmployee.save();
     res.status(201).json({ message: "Employee created successfully.", empCode });
   } catch (error) {
-    console.error("Error creating employee:", error);
+    
     res.status(500).json({ message: "Failed to create employee.", error: error.message });
   }
 };
@@ -215,7 +226,7 @@ export const getEmployees = async (req, res) => {
     // Return response
     res.status(200).json(employees);
   } catch (error) {
-    console.error("Error fetching employees:", error);
+    
     res.status(500).json({ message: "Failed to fetch employees", error: error.message });
   }
 };
@@ -286,7 +297,7 @@ export const updateEmployee = async (req, res) => {
 
     return res.status(200).json({ message: "Employee updated successfully." });
   } catch (error) {
-    console.error("Error updating employee:", error);
+    
     return res.status(500).json({ message: "Failed to update employee.", error: error.message });
   }
 };
@@ -304,7 +315,7 @@ export const updateEmployee = async (req, res) => {
 export const deleteEmployee = async (req, res) => {
 
   const { id } = req.params;
-  console.log(id)
+  
 
   try {
     const employee = await Employee.findById(id);
@@ -434,3 +445,46 @@ export const getSerializedEmployees = async (req, res) => {
 //   }
 // };
 
+export const getEmpToAdvanceMark = async (req, res) => {
+  
+  try {
+    const { org, month, year } = req.query;
+
+    if (!month || !year) {
+      return res.status(400).json({ message: "Month and year are required." });
+    }
+
+    // Build the query for employees filtered by organization
+    const query = {
+      dol: null, // Only employees whose dol is null (currently employed)
+    };
+
+    // Add organization filter if provided
+    if (org) query.org = org;
+
+    // Fetch employees
+    const employees = await Employee.find(query)
+      .sort({ doj: 1 })
+      .select("name empCode doj advances");
+
+    // Filter advances for the current month and year
+    const currentMonthAdvances = employees.map((employee) => {
+      const filteredAdvances = (employee.advances || []).filter((advance) => {
+        const advanceDate = new Date(advance.date);
+        return (
+          advanceDate.getMonth() + 1 === parseInt(month) &&
+          advanceDate.getFullYear() === parseInt(year)
+        );
+      });
+      return {
+        ...employee.toObject(),
+        advances: filteredAdvances,
+      };
+    });
+
+    res.status(200).json(currentMonthAdvances);
+  } catch (error) {
+    
+    res.status(500).json({ message: "Failed to fetch employees." });
+  }
+};

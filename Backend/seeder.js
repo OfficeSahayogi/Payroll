@@ -85,7 +85,6 @@ const seedUsers = async () => {
     await User.create(user);
   }
 
-  console.log("Users seeded successfully!");
   process.exit();
 };
 

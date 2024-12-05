@@ -14,8 +14,9 @@ import UpdatedSalary from "./pages/UpdatedSalary";
 import NotFound from "./pages/PageNotF";
 import AttendanceTable from "./pages/AttendanceTable";
 import SalaryTable from "./pages/SalarySheet";
-import AddAdvance from "./pages/AddAdvance";
 import ListAdvance from "./pages/ListAdvance";
+import SubmitAdvances from "./pages/SubmitAdvances";
+import AbsentEmployees from "./pages/AbsentEmployee";
 
 
 const App = () => {
@@ -60,8 +61,9 @@ const App = () => {
           <Route path="updateSalary" element={<UpdatedSalary />} />
           <Route path="AttendanceSheet" element={<AttendanceTable/>} />
           <Route path="salarySheet" element={<SalaryTable/>}/>
-          <Route path="addAdvance" element={<AddAdvance/>}/>
+          <Route path="addAdvance" element={<SubmitAdvances/>}/>
           <Route path="advanceList" element={<ListAdvance/>}/>
+          <Route path="absentList" element={<AbsentEmployees/>}/>
         </Route>
 
         {/* Catch-All for Invalid Routes */}

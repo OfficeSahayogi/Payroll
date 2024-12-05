@@ -3,8 +3,10 @@ import {
   markAttendanceForEmployees,
   getAttendanceDataForEmployees,
   getMonthlyAttendance,
-  calculateEmployeeSalaries
-
+  calculateEmployeeSalaries,
+  addAdvance,
+  getEmployeeAdvancesByMonth,
+  getAbsentEmployees
 } from "../controllers/AttendanceController.js";
 
 const router = express.Router();
@@ -17,6 +19,12 @@ router.post("/markAttendence",markAttendanceForEmployees)
 router.get("/monthly", getMonthlyAttendance);
 
 router.get("/salary",calculateEmployeeSalaries)
+
+router.post("/addAdvance",addAdvance)
+
+router.get("/getEmployeeAdvancesByMonth",getEmployeeAdvancesByMonth)
+router.get("/absentEmp",getAbsentEmployees)
+// router.get("/advances", getEmployeesWithAdvances);
 
 // Route to get attendance by date or range
 // router.get("/", getAttendanceByDate);

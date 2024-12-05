@@ -93,7 +93,7 @@ export const computeAndPaySalary = async (req, res) => {
   
       res.status(200).json({ success: true, message: "Salaries computed and saved successfully.", salaries });
     } catch (error) {
-      console.error("Error computing salary:", error);
+      
       res.status(500).json({ success: false, message: error.message });
     }
   };
@@ -131,7 +131,7 @@ export const computeAndPaySalary = async (req, res) => {
   
       return res.status(200).json({ success: true, message: "Advance marked successfully." });
     } catch (error) {
-      console.error("Error marking advance:", error);
+      
       res.status(500).json({ success: false, message: "An error occurred while marking advance." });
     }
   };

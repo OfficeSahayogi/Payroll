@@ -20,7 +20,7 @@ const AttendanceMarking = () => {
   const datePickerRefDoA = useRef(null);
 
   // Global Attendance Status
-  const [globalStatus, setGlobalStatus] = useState(null); // "Present", "Half-Day", "Absent"
+  const [globalStatus, setGlobalStatus] = useState("Present"); // "Present", "Half-Day", "Absent"
   const [editMode, setEditMode] = useState({
     // key as employeeId, value as field (P, A, H)
   });
@@ -46,7 +46,7 @@ const AttendanceMarking = () => {
         },
         { withCredentials: true }
       );
-
+      setGlobalStatus("Present")
       setFileEmployees(response.data.attendanceData || []);
     } catch (error) {
       if (error.status === 404) {
@@ -342,6 +342,7 @@ const AttendanceMarking = () => {
                               <label className="">P</label>
                               <input
                                 type="checkbox"
+                  
                                 checked={globalStatus === "Present"}
                                 onChange={() =>
                                   handleGlobalStatusChange("Present")

@@ -224,6 +224,9 @@ function Navbar() {
                     <option value="salarySheet">
                       Salary Sheet
                     </option>
+                    <option value="absentList">
+                      Absent List
+                    </option>
                   </select>
                 </div>
               </div>

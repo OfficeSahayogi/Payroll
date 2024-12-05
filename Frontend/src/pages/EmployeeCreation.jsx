@@ -40,10 +40,20 @@ const EmployeeCreation = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    if(value==="Labor")
+    {
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
-    }));
+      salary:430
+    }))}
+    else{
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: value,
+  
+      }))
+    }
   };
 
   const handleSubmit = async (e) => {

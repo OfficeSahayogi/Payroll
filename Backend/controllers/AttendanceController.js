@@ -16,7 +16,6 @@ export const getAttendanceDataForEmployees = async (req, res) => {
     const dateKey = selectedDate.toISOString().split("T")[0]; // Use 'YYYY-MM-DD' as the date key
 
     // Fetch employees whose DOJ is on or before the selected date
-    console.log(selectedDate)
     const query = {
       doj: { $lte: selectedDate }, // Employees who joined on or before the date
       $or: [{ dol: null }, { dol: { $gte: selectedDate } }], // Exclude employees who left before the date
@@ -36,13 +35,12 @@ export const getAttendanceDataForEmployees = async (req, res) => {
       month,
     });
     
-    console.log("att",attendanceRecords)
     // Merge attendance data with employee data for the specific date
     const attendanceData = employees.map((employee) => {
       const attendanceRecord = attendanceRecords.find(
         (record) => record.employeeId.toString() === employee._id.toString()
       );
-      console.log("curr",attendanceRecord)
+      
       // Default attendance
       const attendance = {
         employeeId: employee._id,
@@ -52,8 +50,8 @@ export const getAttendanceDataForEmployees = async (req, res) => {
         empCode: employee.empCode,
         salaryType: employee.salaryType,
         salary: employee.salary,
-        status: "Absent", // Default to 'Absent'
-        hoursWorked: 0, // Default to 0 hours
+        status: "Present", // Default to 'Absent'
+        hoursWorked: 12, // Default to 0 hours
       };
 
       // Check if attendanceRecord exists and retrieve data for the dateKey
@@ -74,10 +72,9 @@ export const getAttendanceDataForEmployees = async (req, res) => {
 
       return attendance;
     });
-    console.log("findal",attendanceData)
     return res.status(200).json({ success: true, attendanceData });
   } catch (error) {
-    console.error("Error fetching attendance data:", error);
+    
     return res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -149,10 +146,9 @@ export const markAttendanceForEmployees = async (req, res) => {
 
 
 export const getMonthlyAttendance = async (req, res) => {
-  
   try {
-    const { org, month, year } = req.query;
-
+    let { org, month, year } = req.query;
+    month = String(month).padStart(2, "0");
     const query = {
       $or: [{ dol: null }, { dol: { $gte: new Date(year, month - 1, 1) } }],
       doj: { $lte: new Date(year, month, 0) },
@@ -162,35 +158,33 @@ export const getMonthlyAttendance = async (req, res) => {
     const employees = await Employee.find(query).select(
       "_id name empCode doj dol salaryType salary"
     );
-
+     
     const attendanceRecords = await Attendance.find({
       employeeId: { $in: employees.map((emp) => emp._id) },
       month,
       year,
     });
-
+    
     const attendanceMap = attendanceRecords.reduce((map, record) => {
       map[record.employeeId] = record.attendance;
       return map;
     }, {});
-
+  
     const daysInMonth = new Date(year, month, 0).getDate();
     const responseData = employees.map((emp) => {
       const attendance = attendanceMap[emp._id] || new Map(); // Ensure it's a Map
     
       // Build daily attendance data
-      console.log("attendance current", attendance);
       const dailyAttendance = Array.from({ length: daysInMonth }, (_, index) => {
         const day = `${year}-${String(month).padStart(2, "0")}-${String(
           index + 1
         ).padStart(2, "0")}`;
-        console.log("day", day);
-    
+        
         // Access the attendance record using Map's get method
         const attendanceRecord = attendance.get(day);
     
         if (attendanceRecord) {
-          console.log("attendance show", attendanceRecord);
+          
           return {
             date: day,
             status: attendanceRecord.status || "-",
@@ -212,7 +206,7 @@ export const getMonthlyAttendance = async (req, res) => {
 
     res.status(200).json(responseData);
   } catch (error) {
-    console.error("Error fetching attendance:", error);
+    
     res.status(500).json({ message: "Failed to fetch attendance", error });
   }
 };
@@ -220,18 +214,18 @@ export const getMonthlyAttendance = async (req, res) => {
 
 export const calculateEmployeeSalaries = async (req, res) => {
   try {
-    const { month, year, org } = req.query;
-
+    let { month, year, org } = req.query;
+    
+    month = String(month).padStart(2, "0");
     if (!month || !year) {
       return res.status(400).json({ success: false, message: "Month and year are required." });
     }
 
     const daysInMonth = new Date(year, month, 0).getDate();
-
     // Fetch employees based on organization and date range
     const query = { org, $or: [{ dol: null }, { dol: { $gte: new Date(year, month - 1, 1) } }] };
     const employees = await Employee.find(query).select(
-      "name empCode doj dol salaryType salary empType"
+      "name empCode doj dol salaryType salary empType advances"
     );
 
     if (!employees || employees.length === 0) {
@@ -268,15 +262,12 @@ export const calculateEmployeeSalaries = async (req, res) => {
         throw new Error(`Salary for employee ${employee.empCode} (${employee.name}) is not set.`);
       }
 
-      console.log("Processing employee:", employee.empCode, "Attendance:", attendance);
-
       // Iterate through days in the effective month
       for (let day = 1; day <= effectiveDays; day++) {
         const dayKey = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-        // console.log(attendance.get(dayKey))
+
         const dailyAttendance = attendance.get(dayKey)||{}; // Access as a plain object
         
-        console.log("Checking date:", dayKey, "Attendance record:", dailyAttendance);
         if (employee.salaryType === "Hourly" && ((dailyAttendance.status === "Present" || dailyAttendance.status === "Half-Day"))) {
           
           totalWorkedHours += dailyAttendance.hoursWorked ; // Add worked hours for hourly employees
@@ -290,11 +281,11 @@ export const calculateEmployeeSalaries = async (req, res) => {
       }
 
       // If it's a past month, ensure attendance is complete
-      if (!isCurrentMonth && Object.keys(attendance).length < daysInMonth) {
-        throw new Error(
-          `Incomplete attendance data for employee ${employee.empCode} (${employee.name}) for the month ${month}/${year}.`
-        );
-      }
+      // if (!isCurrentMonth && Object.keys(attendance).length < daysInMonth) {
+      //   throw new Error(
+      //     `Incomplete attendance data for employee ${employee.empCode} (${employee.name}) for the month ${month}/${year}.`
+      //   );
+      // }
 
       // Calculate salary based on salary type and effective days
       let actualSalary = 0;
@@ -304,12 +295,25 @@ export const calculateEmployeeSalaries = async (req, res) => {
         else
         actualSalary = (((employee.salary / daysInMonth)/12) * totalWorkPH)-((employee.salary / daysInMonth)*totalAbsentDays);
       } else if (employee.salaryType === "Daily") {
-        actualSalary = employee.salary * totalPresentDays;
+        actualSalary = (employee.salary/12) * totalWorkPH;
       } else if (employee.salaryType === "Hourly") {
         const totalHours =  totalWorkedHours; // Assuming 8 hours per day
         actualSalary = employee.salary * totalHours;
       }
-
+      const totalAdvance = (employee.advances || []).reduce((sum, advance) => {
+        const advanceDate = new Date(advance.date);
+      
+        if (
+          advanceDate.getFullYear() === parseInt(year, 10) &&
+          advanceDate.getMonth() + 1 === parseInt(month, 10)
+        ) {
+          return sum + advance.amount;
+        }
+        return sum;
+      }, 0);
+      
+      
+      const netPayable = actualSalary - totalAdvance;
       return {
         empCode: employee.empCode,
         name: employee.name,
@@ -321,17 +325,214 @@ export const calculateEmployeeSalaries = async (req, res) => {
         presentDays: totalPresentDays,
         absentDays: totalAbsentDays,
         actualSalary: actualSalary.toFixed(2),
-        advances: 0, // Default value; can be updated dynamically
-        netPayable: actualSalary.toFixed(2), // Adjusted by advances
+        advances: totalAdvance.toFixed(2), // Default value; can be updated dynamically
+        netPayable: netPayable.toFixed(2), // Adjusted by advances
       };
     });
 
     return res.status(200).json({ success: true, salaryData });
   } catch (error) {
-    console.error("Error calculating salaries:", error);
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+
+export const addAdvance = async (req, res) => {
+  try {
+    const { empCode, org, date, amount,paymentMode } = req.body;
+
+    // Validate input
+    if (!empCode || !org || !date || !amount) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    if (amount <= 0) {
+      return res
+        .status(400)
+        .json({ message: "Advance amount must be greater than zero." });
+    }
+
+    const advanceDate = new Date(date);
+
+    // Find the active employee in the specified organization
+    const employee = await Employee.findOne({
+      empCode,
+      org,
+      dol: null, // Ensure the employee is currently active
+    });
+
+    if (!employee) {
+      return res.status(404).json({
+        message: `Active employee with code ${empCode} not found in organization ${org}.`,
+      });
+    }
+
+    // Validate advance date
+    const formateDate=(currentDate)=>{
+      const dd = String(currentDate.getDate()).padStart(2, "0");
+    const mm = String(currentDate.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+    const yyyy = currentDate.getFullYear();
+    return `${dd}-${mm}-${yyyy}`;
+    }
+    if (advanceDate < new Date(employee.doj)) {
+      return res.status(400).json({
+        message: `Advance date cannot be earlier than the employee's Date of Joining (${formateDate(employee.doj)}).`,
+      });
+    }
+
+    // Add advance to the array
+    const advance = { date: advanceDate, amount,mode:paymentMode};
+    employee.advances.push(advance);
+
+    await employee.save();
+
+    res
+      .status(200)
+      .json({ message: "Advance added successfully.", employee });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to add advance.", error: error.message });
+  }
+};
+
+export const getEmployeeAdvancesByMonth = async (req, res) => {
+  try {
+    const { org, month, year } = req.query;
+
+    if (!month || !year) {
+      return res.status(400).json({ message: "Month and year are required." });
+    }
+
+    // Build the query for employees filtered by organization
+    const query = {};
+    if (org) query.org = org;
+
+    // Fetch employees with advances
+    const employees = await Employee.find(query)
+      .sort({ name: 1 }) // Sort alphabetically by name
+      .select("name empCode advances doj dol org");
+
+    // Filter advances for the specified month and year
+    const result = employees.map((employee) => {
+      const filteredAdvances = (employee.advances || []).filter((advance) => {
+        const advanceDate = new Date(advance.date);
+        return (
+          advanceDate.getFullYear() === parseInt(year, 10) &&
+          advanceDate.getMonth() + 1 === parseInt(month, 10)
+        );
+      });
+
+      return {
+        empCode: employee.empCode,
+        name: employee.name,
+        doj:employee.doj,
+        dol:employee.dol,
+        advances: filteredAdvances,
+      };
+    });
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error fetching advances:", error);
+    res.status(500).json({ message: "Failed to fetch advances.", error: error.message });
+  }
+};
+
+
+export const getAbsentEmployees = async (req, res) => {
+  console.log("absent", req.query);
+  try {
+    let { date, month, year, org } = req.query;
+
+    // Validate input
+    if (!date || !month || !year || !org) {
+      return res.status(400).json({
+        success: false,
+        message: "Date, month, year, and organization are required.",
+      });
+    }
+
+    // Create the full date object and explicitly set the time to midnight (00:00:00)
+    const fullDate = new Date(Date.UTC(year, month - 1, date, 0, 0, 0, 0)); // Ensure the date is in UTC at midnight
+    console.log("date", fullDate); // Logging the full date
+
+    // Check if the date is valid
+    if (isNaN(fullDate)) {
+      return res.status(400).json({ success: false, message: "Invalid date provided." });
+    }
+
+    // Build query to fetch employees who joined before or on the selected date
+    const query = {
+      doj: { $lte: fullDate },
+      $or: [{ dol: null }, { dol: { $gte: fullDate } }],
+    };
+
+    if (org) query.org = org;
+
+    // Fetch employees from the database
+    const employees = await Employee.find(query).select("_id name empCode salaryType doj dol");
+
+    if (!employees || employees.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No employees found for the organization.",
+      });
+    }
+
+    const employeeIds = employees.map((emp) => emp._id);
+
+    // Fetch attendance records for the specified date
+    const attendanceRecords = await Attendance.find({
+      employeeId: { $in: employeeIds },
+      year,
+      month,
+    });
+
+    if (!attendanceRecords || attendanceRecords.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Attendance is not marked for the given date.",
+      });
+    }
+
+    // Create a map of attendance records for quick lookup
+    const attendanceMap = attendanceRecords.reduce((map, record) => {
+      const dayKey = `${year}-${String(month).padStart(2, "0")}-${String(date).padStart(2, "0")}`;
+      map[record.employeeId] = record.attendance.get(dayKey); // Access attendance using the Map's get method
+      return map;
+    }, {});
+
+    // Filter employees who are absent
+    const absentEmployees = employees.filter(
+      (emp) =>
+        (!attendanceMap[emp._id] || attendanceMap[emp._id]?.status === "Absent") && !emp.dol
+    );
+
+    // If no absent employees found
+    if (absentEmployees.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No employees were absent on this date.",
+        data: [],
+      });
+    }
+
+    // Return the list of absent employees
+    return res.status(200).json({
+      success: true,
+      data: absentEmployees.map((emp) => ({
+        empCode: emp.empCode,
+        name: emp.name,
+        salaryType: emp.salaryType,
+      })),
+    });
+  } catch (error) {
+    console.error("Error fetching absent employees:", error);
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while fetching absent employees.",
+    });
+  }
+};
+
 
 
 

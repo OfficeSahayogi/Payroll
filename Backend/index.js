@@ -37,7 +37,7 @@ app.use("/api/employees", employeeRoutes); // Employee management routes
 app.use("/api/attendance", attendanceRoutes);
 
 // Start the server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5008;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

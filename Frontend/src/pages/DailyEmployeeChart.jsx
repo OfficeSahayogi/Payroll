@@ -279,7 +279,7 @@ const DailyEmployeeChart = () => {
             </button>
           </div>
         </div>
-        <div className="overflow-y-auto max-h-80 xl:max-h-[600px] 2xl:max-h-[700px]">
+        <div className="overflow-y-auto max-h-[350px] 2xl:max-h-[700px]">
           {isLoading ? (
             <p className="text-center text-gray-500">Loading...</p>
           ) : error ? (
