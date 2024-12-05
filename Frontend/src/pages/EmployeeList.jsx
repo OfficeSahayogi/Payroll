@@ -29,7 +29,7 @@ const EmployeeList = () => {
     try {
       const response = await axios.get(`${base.baseUrl}/api/employees`, {
         params: selectedOrgin !== "All" ? { org: selectedOrgin } : {},
-        withCredentials: true,
+        
       });
       setEmployees(response.data);
     } catch (error) {
