@@ -18,12 +18,17 @@ connectDB();
 const app = express();
 
 // Middleware
-const corsOptions = {
-  origin: "http://localhost:5173", // Replace with your frontend URL
-  credentials: true, // Allow cookies and credentials
-};
+// const corsOptions = {
+//   origin: "http://localhost:5173", // Replace with your frontend URL
+//   credentials: true, // Allow cookies and credentials
+// };
 
-app.use(cors());
+// const cors = require('cors');
+app.use(cors({
+  origin: 'http://localhost:5173', // Allow specific origin
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow specific methods
+  credentials: true, // Allow cookies or authorization headers
+}));
 app.use(express.json()); // Parse incoming JSON requests
 
 // Health Check Route
