@@ -23,7 +23,7 @@ const corsOptions = {
   credentials: true, // Allow cookies and credentials
 };
 
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json()); // Parse incoming JSON requests
 
 // Health Check Route
