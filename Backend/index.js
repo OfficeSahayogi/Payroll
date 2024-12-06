@@ -17,23 +17,6 @@ connectDB();
 // Initialize the Express application
 const app = express();
 
-// Middleware
-// const corsOptions = {
-//   origin: "http://localhost:5173", // Replace with your frontend URL
-//   credentials: true, // Allow cookies and credentials
-// };
-
-// app.use(cors({
-//   origin: 'http://localhost:5173', // Allow specific origin
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow specific methods
-//   credentials: true, // Allow cookies or authorization headers
-// }));
-// app.use(cors({
-//   origin: '*', // Allow requests only from this origin
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed methods
-//   allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
-//   credentials: true, // Allow cookies or credentials
-// }));
 app.use(express.json()); // Parse incoming JSON requests
 app.use(cors({
   origin: 'https://glittery-biscuit-836ac9.netlify.app', // Allow requests from your Netlify frontend
@@ -49,7 +32,7 @@ app.options('*', (req, res) => {
   res.sendStatus(200);
 });
 
-// Health Check Route
+
 app.get("/", (req, res) => {
   res.send("Payroll API is running...");
 });
