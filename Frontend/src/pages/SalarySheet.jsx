@@ -89,7 +89,7 @@ const SalaryTable = () => {
           "Name\nDOJ\nDOL",
           "Salary Type",
           "Gross Salary",
-          "Total Days || Total Hours\nPresent \n Absent)",
+          "Total Days || Total Hours\nPresent\nAbsent",
           "Actual Salary",
           "Advances",
           "Net Payable",
@@ -105,8 +105,8 @@ const SalaryTable = () => {
         employee.grossSalary || 0,
         `${
           employee.salaryType === "Hourly"
-            ? `H-${employee.totalDays}`
-            : `D-${employee.totalDays}`
+            ? `${employee.totalDays}`
+            : `${employee.totalDays}`
         }\n${employee.presentDays}\n${employee.absentDays}`, // Total Days/Hours with Present and Absent
         (Number(employee.actualSalary) || 0).toFixed(2), // Ensure actualSalary is a number
         (Number(employee.advances) || 0).toFixed(2), // Ensure advances is a number
@@ -115,7 +115,7 @@ const SalaryTable = () => {
       ]),
       styles: { fontSize: 8, halign: "center", cellPadding: 2 }, // Smaller font for compact layout
       columnStyles: {
-        0: { cellWidth: 10 }, // Emp Code
+        0: { cellWidth: 12 }, // Emp Code
         1: { cellWidth: 40 }, // Name with DOJ and DOL
         2: { cellWidth: 30 }, // Salary Type
         3: { cellWidth: 25 }, // Gross Salary
@@ -219,9 +219,9 @@ const SalaryTable = () => {
       {loading ? (
         <p className="text-center text-gray-500">Loading...</p>
       ) : salaryData.length > 0 ? (
-        <div className="overflow-x-auto  max-h-[300px] 2xl:max-h-[600px]">
+        <div className="overflow-x-auto  max-h-[350px] 2xl:max-h-[600px]">
           <table className=" w-full border-collapse border border-gray-300 ">
-            <thead className="sticky top-0">
+            <thead className="sticky top-0 font-light text-xs 2xl:font-bold 2xl:text-lg ">
               <tr className="bg-gray-200">
                 <th className="border border-gray-300 px-4 py-2 w-[5%]">
                   Emp Code
@@ -261,7 +261,7 @@ const SalaryTable = () => {
                 
               </tr>
             </thead>
-            <tbody className="text-center overflow-y-auto">
+            <tbody className="text-center overflow-y-auto text-xs 2xl:text-lg">
               {salaryData.map((employee, index) => (
                 <tr key={index}>
                   <td className="border border-gray-300 px-4 py-2">
@@ -287,11 +287,12 @@ const SalaryTable = () => {
                     {employee.grossSalary}
                   </td>
 
-                  <td className="border  px-4 py-2 flex flex-col gap-3">
+                  <td className="border border-gray-300  px-4 py-2 flex flex-col gap-3">
                     <spna className="font-bold">
                       {employee.totalDays}
-                      <hr className="border-t border-gray-500  w-full" />
+                      
                     </spna>
+                    <hr className="border-t border-gray-500 my-2 w-full" />
                     <span className="flex flex-col gap-1">
                       <span> {employee.presentDays}</span>
                       <span> {employee.absentDays}</span>

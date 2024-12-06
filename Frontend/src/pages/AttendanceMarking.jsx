@@ -11,8 +11,8 @@ const AttendanceMarking = () => {
   const { role, organizations, selectedOrg } = useSelector(
     (state) => state.user
   );
-  const [selectedOrgin, setSelectedOrg] = useState(selectedOrg || "All");
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedOrgin, setSelectedOrg] = useState(selectedOrg || selectedOrg==="All"?organizations[0]:selectedOrg);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [filemployees, setFileEmployees] = useState([]);
   const [attendanceData, setAttendanceData] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -46,7 +46,6 @@ const AttendanceMarking = () => {
         },
         { withCredentials: true }
       );
-      setGlobalStatus("Present")
       setFileEmployees(response.data.attendanceData || []);
     } catch (error) {
       if (error.status === 404) {
@@ -175,6 +174,7 @@ const AttendanceMarking = () => {
     }));
   };
   const handleManualAbsentSubmit = () => {
+    setGlobalStatus("")
     let codes;
     if (selectedOrgin === "Jai Durga Cottex") {
       codes = absentEmployeeCodes.split(",").map((code) => {
@@ -197,6 +197,7 @@ const AttendanceMarking = () => {
     setAbsentEmployeeCodes(""); // Clear the input field
   };
   const handleManualHalfDaySubmit = () => {
+    setGlobalStatus("")
     let codes;
     if (selectedOrgin === "Jai Durga Cottex") {
       codes = halfDayEmployeeCodes.split(",").map((code) => {
@@ -236,7 +237,7 @@ const AttendanceMarking = () => {
                 htmlFor="doj"
                 className="absolute z-10 text-sm md:text-base font-semibold top-1 left-3 bg-white px-1 -mt-2 text-gray-600"
               >
-                Date of Joining <span className="text-red-500">*</span>
+                Date of Attendance <span className="text-red-500">*</span>
               </label>
               {/* DatePicker with Icon */}
               <div className="flex items-center w-full relative">
@@ -268,7 +269,7 @@ const AttendanceMarking = () => {
                   Select Organization:
                 </label>
                 <div className="flex gap-4">
-                  <button
+                  {/* <button
                     className={`p-1 rounded-lg ${
                       selectedOrgin === "All"
                         ? "bg-blue-500 text-white"
@@ -277,7 +278,7 @@ const AttendanceMarking = () => {
                     onClick={() => setSelectedOrg("All")}
                   >
                     All
-                  </button>
+                  </button> */}
                   {organizations.map((org) => (
                     <button
                       key={org}

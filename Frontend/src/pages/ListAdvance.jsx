@@ -88,9 +88,9 @@ const ViewAdvances = () => {
           />
         </div>
       </div>
-
+      <div className="max-h-[280px] 2xl:max-h-[600px] overflow-y-auto">
       <table className="w-full table-auto border-collapse border">
-        <thead>
+        <thead className="sticky top-0 ">
           <tr className="bg-gray-100">
             <th className="border p-2">Employee Code</th>
             <th className="border p-2">Name</th>
@@ -126,6 +126,7 @@ const ViewAdvances = () => {
           }
         </tbody>
       </table>
+      </div>
     </div>
   );
 };

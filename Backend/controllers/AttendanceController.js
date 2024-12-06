@@ -321,7 +321,7 @@ export const calculateEmployeeSalaries = async (req, res) => {
         dol: employee.dol,
         salaryType:employee.salaryType,
         grossSalary: employee.salary,
-        totalDays: employee.salaryType==="Hourly"?`H-${totalWorkedHours}`:`d-${totalPresentDays},H-${totalWorkPH}`,
+        totalDays: employee.salaryType==="Hourly"?`H-${totalWorkedHours}`:`d-${totalPresentDays}`,
         presentDays: totalPresentDays,
         absentDays: totalAbsentDays,
         actualSalary: actualSalary.toFixed(2),

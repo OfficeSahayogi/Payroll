@@ -9,7 +9,7 @@ const AttendanceTable = () => {
   const { role, organizations, selectedOrg } = useSelector((state) => state.user);
 
   const [selectedOrganization, setSelectedOrganization] = useState(
-    selectedOrg || organizations[0]
+    selectedOrg ==="All"?organizations[0]:selectedOrg
   );
   const [attendanceData, setAttendanceData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -87,8 +87,8 @@ const AttendanceTable = () => {
       empIndex + 1, // Sno.
       emp?.emp?.name || "-", // Name (Do not shrink this column)
       emp?.emp?.empCode || "-", // Code
-      emp?.emp?.doj ? new Date(emp.emp.doj).toLocaleDateString() : "-", // DOJ
-      emp?.emp?.dol ? new Date(emp.emp.dol).toLocaleDateString() : "-", // DOL
+      emp?.emp?.doj ? formatDate(new Date(emp.emp.doj)): "-", // DOJ
+      emp?.emp?.dol ? formatDate(new Date(emp.emp.dol)): "-", // DOL
       `${emp?.emp?.salary || "-"} / ${emp?.emp?.salaryType || "-"}`, // Gross Wages
       ...emp?.dailyAttendance?.map((day) =>
         day.status === "-" ? "-" : day.status==="Absent"?"A":day.status==="Present"?"P":"H"
@@ -103,20 +103,20 @@ const AttendanceTable = () => {
       body: tableBody,
       startY: 20,
       styles: {
-        fontSize: 7, // Reduced font size for compactness
+        fontSize: 5, // Reduced font size for compactness
         halign: "center", // Horizontal alignment for all cells
-        cellPadding: 1.5, // Reduced padding for better fit
+        cellPadding: 1, // Reduced padding for better fit
       },
       columnStyles: {
-        0: { cellWidth: 8 }, // Sno.
-        1: { cellWidth: 40 }, // Name (wider for readability)
+        0: { cellWidth: 6 }, // Sno.
+        1: { cellWidth: 35 }, // Name (wider for readability)
         2: { cellWidth: 8 }, // Code
         3: { cellWidth: 14 }, // DOJ (smaller width)
         4: { cellWidth: 14 }, // DOL (smaller width)
-        5: { cellWidth: 15 }, // Gross Wages
+        5: { cellWidth: 12 }, // Gross Wages
         // Day columns (automatically adjusted to fit within the page)
         [6 + daysInMonth]: { cellWidth: 5 }, // P (Presents)
-        [7 + daysInMonth]: { cellWidth: 5 }, // A (Absents)
+        [6 + daysInMonth]: { cellWidth: 5 }, // A (Absents)
       },
       tableWidth: "auto", // Ensures table fits within the page
       theme: "grid", // Add grid lines for better readability

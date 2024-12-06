@@ -276,24 +276,31 @@ const EmployeeCreation = () => {
 
           {/* Salary Type */}
           <div className="relative pt-2">
-            <label
-              htmlFor="salaryType"
-              className="absolute text-sm md:text-base font-semibold top-1 left-3 bg-white px-1 -mt-2 text-gray-600"
-            >
-              Salary Type
-            </label>
-            <select
-              name="salaryType"
-              value={formData.salaryType}
-              onChange={handleInputChange}
-              className="border border-blue-400 rounded-lg outline-none p-3 w-full"
-              autoComplete="off"
-            >
-              <option value="Monthly">Monthly</option>
-              <option value="Daily">Daily</option>
-              <option value="Hourly">Hourly</option>
-            </select>
-          </div>
+  <label
+    htmlFor="salaryType"
+    className="absolute text-sm md:text-base font-semibold top-1 left-3 bg-white px-1 -mt-2 text-gray-600"
+  >
+    Salary Type
+  </label>
+  <select
+    name="salaryType"
+    value={formData.salaryType}
+    onChange={handleInputChange}
+    className="border border-blue-400 rounded-lg outline-none p-3 w-full"
+    autoComplete="off"
+  >
+    {/* Dynamically render options based on empType */}
+    {(formData.empType === "Labor"
+      ? ["Daily", "Hourly"]
+      : ["Monthly", "Daily", "Hourly"]
+    ).map((type) => (
+      <option key={type} value={type}>
+        {type}
+      </option>
+    ))}
+  </select>
+</div>
+
 
           {/* Salary */}
           <div className="relative pt-2">
