@@ -25,7 +25,7 @@ app.use(cors({
   credentials: true, // Allow cookies or credentials
 }));
 app.options('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', 'https://glittery-biscuit-836ac9.netlify.app');
+  res.header('Access-Control-Allow-Origin', 'https://statuesque-beignet-7f7001.netlify.app/');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -47,5 +47,8 @@ const PORT = process.env.PORT || 5008;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+
+
 
 
