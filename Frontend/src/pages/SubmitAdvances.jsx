@@ -66,7 +66,6 @@ const SubmitAdvances = () => {
           title: "Error",
           iconColor: "red",
           confirmButtonColor: "red",
-          title: "Error",
           color: "red",
           text: error.response.data.message || "An error occurred",
         });
@@ -76,7 +75,6 @@ const SubmitAdvances = () => {
           title: "Error",
           iconColor: "red",
           confirmButtonColor: "red",
-          title: "Error",
           color: "red",
           text: error.response.data.message || "An unexpected error occurred.",
         });
