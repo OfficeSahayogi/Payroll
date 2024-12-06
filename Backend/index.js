@@ -19,13 +19,13 @@ const app = express();
 
 app.use(express.json()); // Parse incoming JSON requests
 app.use(cors({
-  origin: 'https://statuesque-beignet-7f7001.netlify.app', // Allow requests from your Netlify frontend
+  origin: 'https://payroll.mittalspinners.com', // Allow requests from your Netlify frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these HTTP methods
   allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
   credentials: true, // Allow cookies or credentials
 }));
 app.options('*', (req, res) => {
-  res.header('Access-Control-Allow-Origin', 'https://statuesque-beignet-7f7001.netlify.app');
+  res.header('Access-Control-Allow-Origin', 'https://payroll.mittalspinners.com');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
