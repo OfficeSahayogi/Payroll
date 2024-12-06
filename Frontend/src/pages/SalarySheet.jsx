@@ -12,7 +12,7 @@ const SalaryTable = () => {
   );
 
   const [selectedOrigin, setSelectedOrganization] = useState(
-    selectedOrg || organizations[0]
+    selectedOrg==="All"? organizations[0]:selectedOrg
   );
   const [month, setMonth] = useState(new Date().getMonth() + 1); // Default to current month
   const [year, setYear] = useState(new Date().getFullYear()); // Default to current year
@@ -79,7 +79,7 @@ const SalaryTable = () => {
   const downloadPDF = () => {
     const doc = new jsPDF("landscape");
     doc.setFontSize(14);
-    doc.text(`${selectedOrigin==="All"?organizations[0]:selectedOrigin} Salary Table`, 14, 15);
+    doc.text(`${selectedOrigin==="Mittal Spinners"?"MS":selectedOrigin==="Jai Durga Cottex"?"JDC":"HRM"} Salary Table`, 14, 15);
   
     autoTable(doc, {
       startY: 25,

@@ -64,7 +64,7 @@ const AbsentEmployees = () => {
     doc.setFontSize(12);
   
     // Title at the top of the page
-    doc.text(`${selectedOrg} Absent Employees`, 14, 15);
+    doc.text(`${org==="Mittal Spinners"?"MS":org==="Jai Durga Cottex"?"JDC":"HRM"} Absent Employees`, 14, 15);
   
     // Date at the left corner of the page
     doc.text(`Date: ${formatDate(selectedDate)}`, 14, 25);

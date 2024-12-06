@@ -67,7 +67,7 @@ const AttendanceTable = () => {
     doc.setFontSize(14);
   
     // Add Title
-    doc.text(`Attendance Sheet - ${selectedOrganization}`, 14, 10);
+    doc.text(`Attendance Sheet - ${selectedOrganization==="Mittal Spinners"?"MS":selectedOrganization==="Jai Durga Cottex"?"JDC":"HRM"}`, 14, 10);
   
     // Define Table Header
     const tableHead = [

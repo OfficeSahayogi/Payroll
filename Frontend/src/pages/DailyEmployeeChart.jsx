@@ -118,7 +118,7 @@ const DailyEmployeeChart = () => {
     if (staffData.length > 0) {
       doc.setFont("helvetica", "bold");
       doc.setFontSize(12); // Title font size
-      const staffTitle = `${selectedOrganization}`;
+      const staffTitle = `${selectedOrganization==="Mittal Spinners"?"MS":selectedOrganization==="Jai Durga Cottex"?"JDC":"HRM"}`;
       const staffTitleWidth = doc.getTextWidth(staffTitle);
       doc.text(staffTitle, (pageWidth - staffTitleWidth) / 2, margin); // Centered title
   
@@ -146,7 +146,7 @@ const DailyEmployeeChart = () => {
     }
   
     // Save the PDF
-    doc.save(`${selectedOrganization}_Staff_and_Labour_Data.pdf`);
+    doc.save(`${selectedOrganization}Data.pdf`);
   };
   
   
