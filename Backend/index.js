@@ -35,7 +35,20 @@ const app = express();
 //   credentials: true, // Allow cookies or credentials
 // }));
 app.use(express.json()); // Parse incoming JSON requests
-app.use(cors())
+app.use(cors({
+  origin: 'https://glittery-biscuit-836ac9.netlify.app', // Allow requests from your Netlify frontend
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allow these headers
+  credentials: true, // Allow cookies or credentials
+}));
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', 'https://glittery-biscuit-836ac9.netlify.app');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(200);
+});
+
 // Health Check Route
 app.get("/", (req, res) => {
   res.send("Payroll API is running...");
