@@ -110,7 +110,7 @@ const ViewAdvances = () => {
                       <td className="border p-2">{emp.empCode}</td>
                       <td className="border p-2">{emp.name}</td>
                       <td className="border p-2">{formatDate(emp.doj)}</td>
-                      <td className="border p-2">{emp.dol}</td>
+                      <td className="border p-2">{emp?.dol?formatDate(emp.dol):"-"}</td>
                       <td className="border p-2">{formatDate(adv.date)}</td>
                       <td className="border p-2">₹{adv.amount}</td>
                     </tr>
