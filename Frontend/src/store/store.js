@@ -15,8 +15,12 @@ const loadState = () => {
 // Save state to localStorage
 const saveState = (state) => {
   try {
-    const serializedState = JSON.stringify(state);
-    localStorage.setItem("reduxState", serializedState);
+    if (!state || !state.user.isAuthenticated) {
+      localStorage.removeItem("reduxState");
+    } else {
+      const serializedState = JSON.stringify(state);
+      localStorage.setItem("reduxState", serializedState);
+    }
   } catch (error) {
     console.error("Failed to save state to localStorage", error);
   }
@@ -33,7 +37,12 @@ const store = configureStore({
 
 // Save state on every Redux state change
 store.subscribe(() => {
-  saveState(store.getState());
+  const state = store.getState();
+  if (state.user.isAuthenticated) {
+    saveState(state);
+  } else {
+    localStorage.removeItem("reduxState");
+  }
 });
 
 export default store;

@@ -1,11 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { act } from "react";
 
 const initialState = {
+  isAuthenticated: false,
   role: null,
   organizations: [],
   selectedOrg: null,
-  name:null
+  name: null,
 };
 
 const userSlice = createSlice({
@@ -13,19 +13,17 @@ const userSlice = createSlice({
   initialState,
   reducers: {
     login: (state, action) => {
-      
-      state.name=action.payload.name
-      state.role = action.payload.role;
-      state.organizations = action.payload.organizations;
+      const { role, organizations, name } = action.payload;
+      state.isAuthenticated = true;
+      state.role = role;
+      state.organizations = organizations;
+      state.name = name;
     },
     selectOrganization: (state, action) => {
-     
       state.selectedOrg = action.payload;
     },
     logout: (state) => {
-      state.role = null;
-      state.organizations = [];
-      state.selectedOrg = null;
+      return initialState;
     },
   },
 });

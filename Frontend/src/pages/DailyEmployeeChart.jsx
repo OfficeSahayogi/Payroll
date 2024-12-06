@@ -11,7 +11,7 @@ const DailyEmployeeChart = () => {
   const {
     role,
     organizations,
-    selectedOrganization: selectedOrg,
+    selectedOrg,
   } = useSelector((state) => state.user);
   const [selectedOrganization, setSelectedOrganization] = useState(
     selectedOrg || organizations[0]

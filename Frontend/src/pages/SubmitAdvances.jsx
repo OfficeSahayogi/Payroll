@@ -23,7 +23,11 @@ const SubmitAdvances = () => {
   // Handle submit
   const handleSubmit = async () => {
     if (!selectedOrgin || !empCode || !paymentMode || !amount) {
-      alert("All fields are required.");
+      Swal.fire({
+        icon: "info",
+        title: "Error",
+        text: "All field are required",
+      });
       return;
     }
     const formattedDate = selectedDate.toLocaleDateString("en-CA", {
@@ -84,23 +88,24 @@ const SubmitAdvances = () => {
               className="absolute text-sm md:text-base font-semibold top-1 left-3 bg-white px-1 -mt-2 text-blue-900 z-10"
             > Date </label>
           <div className="relative flex items-center w-3/4">
-            <DatePicker
-              selected={selectedDate}
-              onChange={(date) => setSelectedDate(date)}
-              dateFormat="dd-MM-yyyy"
-              className="border border-blue-400 rounded-lg outline-none p-3 w-full pl-10 z-90"
-              placeholderText="Select a date"
-              ref={datePickerRef}
-              showYearDropdown
-              scrollableYearDropdown
-              yearDropdownItemNumber={15}
-              required
-            />
-            <FaCalendarAlt
-              className="absolute left-3 text-2xl text-gray-400 cursor-pointer"
-              onClick={() => datePickerRef.current.setFocus()}
-            />
-          </div>
+  <DatePicker
+    selected={selectedDate}
+    onChange={(date) => setSelectedDate(date)}
+    dateFormat="dd-MM-yyyy"
+    className="border border-blue-400 rounded-lg outline-none p-3 w-full pl-10 z-110"
+    placeholderText="Select a date"
+    ref={datePickerRef}
+    showYearDropdown
+    scrollableYearDropdown
+    yearDropdownItemNumber={15}
+    required
+  />
+  <FaCalendarAlt
+    className="absolute left-3 text-2xl text-gray-400 cursor-pointer"
+    onClick={() => datePickerRef.current.setFocus()}
+  />
+</div>
+
         </div>
 
         {/* Organization Selection (Only for Superadmin) */}
@@ -132,7 +137,7 @@ const SubmitAdvances = () => {
         <div className="relative pt-2 w-[80%]">
             <label
               htmlFor="empType"
-              className="absolute text-sm md:text-base font-semibold top-1 left-3 bg-white px-1 -mt-2 text-blue-900 z-10"
+              className="absolute text-sm md:text-base font-semibold top-1 left-3 bg-white px-1 -mt-2 text-blue-900 "
             >Employee Code:</label>
           <input
             type="text"
@@ -149,7 +154,7 @@ const SubmitAdvances = () => {
         <div className="relative pt-2 w-[80%]">
             <label
               htmlFor="empType"
-              className="absolute text-sm md:text-base font-semibold top-1 left-3 bg-white px-1 -mt-2 text-blue-900 z-10"
+              className="absolute text-sm md:text-base font-semibold top-1 left-3 bg-white px-1 -mt-2 text-blue-900 "
             >Payment Mode:</label>
           <select
             value={paymentMode}
@@ -169,7 +174,7 @@ const SubmitAdvances = () => {
         <div className="relative pt-2 w-[80%]">
             <label
               htmlFor="empType"
-              className="absolute text-sm md:text-base font-semibold top-1 left-3 bg-white px-1 -mt-2 text-blue-900 z-10"
+              className="absolute text-sm md:text-base font-semibold top-1 left-3 bg-white px-1 -mt-2 text-blue-900 "
             >Advance Amount:</label>
           <input
             type="number"

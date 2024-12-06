@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Login } from "./components/Login";
+import { Login } from "./Components/Login";
 import SelectOrg from "./Components/SelectOrg";
 import Dashboard from "./Components/Dasboard";
 import ProtectedRoute from "./utils/ProtectedRoute";
@@ -19,18 +19,18 @@ import SubmitAdvances from "./pages/SubmitAdvances";
 import AbsentEmployees from "./pages/AbsentEmployee";
 
 
-const App = () => {
+import RootRedirect from "./utils/Redirect";
+import CheckLoginRedirect from "./Components/CheckLoginRedirect";
 
+const App = () => {
   return (
     <Router>
       <Routes>
+        {/* Redirect Root Route */}
+        <Route path="/" element={<RootRedirect />} />
+
         {/* Login Route */}
-        <Route
-          path="/"
-          element={
-             <Login />
-          }
-        />
+        <Route path="/login" element={<Login/>} />
 
         {/* Organization Selection Route */}
         <Route
@@ -59,18 +59,19 @@ const App = () => {
           <Route path="markAttendance" element={<AttendanceMarking />} />
           <Route path="viewAttendance" element={<ViewAttendance />} />
           <Route path="updateSalary" element={<UpdatedSalary />} />
-          <Route path="AttendanceSheet" element={<AttendanceTable/>} />
-          <Route path="salarySheet" element={<SalaryTable/>}/>
-          <Route path="addAdvance" element={<SubmitAdvances/>}/>
-          <Route path="advanceList" element={<ListAdvance/>}/>
-          <Route path="absentList" element={<AbsentEmployees/>}/>
+          <Route path="AttendanceSheet" element={<AttendanceTable />} />
+          <Route path="salarySheet" element={<SalaryTable />} />
+          <Route path="addAdvance" element={<SubmitAdvances />} />
+          <Route path="advanceList" element={<ListAdvance />} />
+          <Route path="absentList" element={<AbsentEmployees />} />
         </Route>
 
         {/* Catch-All for Invalid Routes */}
-        <Route path="*" element={<NotFound/>}/>
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );
 };
 
 export default App;
+

@@ -4,11 +4,13 @@ import { FaChevronDown } from "react-icons/fa"; // Import Chevron Down Icon
 import axios from "axios";
 import Swal from "sweetalert2";
 import base from "../config/api"
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../store/userSlice";
 // import OrgCreationModalApproval from "../Pages/Modals/OrgCreationModalApproval";
 
 function Navbar() {
   const userName=useSelector((state) => state?.user?.name)
+  const dispatch=useDispatch()
   
   const navigate = useNavigate();
   const [showOsiCreationModal, setShowOsiCreationModal] = useState(false);
@@ -33,7 +35,10 @@ function Navbar() {
       
       // Handle successful logout
       if (response.status === 200) {
-        localStorage.clear();
+        localStorage.removeItem("reduxState");
+      
+        // Dispatch the logout action
+        dispatch(logout());
         Swal.fire({
           icon: "success",
           title: "Logged Out",
